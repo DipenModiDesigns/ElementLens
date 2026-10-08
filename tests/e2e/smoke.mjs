@@ -104,7 +104,6 @@ try {
   check('preview clipped with fade', (await ui('.el-preview-fade').count()) === 1);
   const previewBox = await preview.boundingBox();
   check('preview is compact', previewBox.height <= 152, JSON.stringify(previewBox));
-  check('JSX option marked soon', await ui('.el-option').filter({ hasText: 'JSX' }).isDisabled());
   check('main copy label', (await ui('.el-copy-main').textContent()) === 'Copy HTML + CSS');
 
   await ui('.el-option').filter({ hasText: 'HTML only' }).click();
@@ -180,6 +179,70 @@ try {
   check('download file name', download.suggestedFilename() === 'elementlens-div-card-md-flex.html', download.suggestedFilename());
   check('download is standalone page', doc.startsWith('<!doctype html>') && doc.includes('<style>') && doc.includes('div.card > h2 {') && doc.includes('<div class="card'));
   await page.screenshot({ path: path.join(artifacts, 'panel.png') });
+
+  // ---------- Phase 2: formats ----------
+  const option = (text) => ui('.el-option').filter({ hasText: new RegExp(`^${text}$`) });
+  const missingIn = (text, list) => list.filter((w) => !text.includes(w));
+  await option('Full').click();
+
+  // JSX component + CSS file
+  await option('JSX').click();
+  const jsxFull = await preview.textContent();
+  fs.writeFileSync(path.join(artifacts, 'jsx-output.txt'), jsxFull);
+  const jsxMissing = missingIn(jsxFull, [
+    '/* styles.css */\ndiv.card {', "import './styles.css';", 'export default function Card() {',
+    `<div className="card md:flex" x-data="{ open: false }">`, '<img src="http://localhost:5577/img/logo.png" alt="" width="32" height="32" />',
+  ]);
+  check('JSX full output', jsxMissing.length === 0 && !jsxFull.includes('onclick'), `missing: ${jsxMissing.join(' | ')}`);
+  check('JSX labels', (await ui('.el-copy-main').textContent()) === 'Copy JSX + CSS' && (await option('JSX only').count()) === 1);
+  await option('HTML').click();
+
+  // Tailwind (page does not use Tailwind -> converted from computed styles)
+  await option('Tailwind').click();
+  const twOut = await preview.textContent();
+  fs.writeFileSync(path.join(artifacts, 'tailwind-output.txt'), twOut);
+  const twMissing = missingIn(twOut, ['flex', 'items-center', 'gap-3', 'w-105', 'px-6', 'py-4', 'rounded-lg', 'bg-white', 'cursor-pointer', "before:content-['★']", 'border-[#dddddd]']);
+  check('Tailwind v4 classes', twMissing.length === 0 && !twOut.includes('<style>'), `missing: ${twMissing.join(' | ')}`);
+  check('Tailwind copy label', (await ui('.el-copy-main').textContent()) === 'Copy HTML');
+  await option('v3').click();
+  const tw3 = await preview.textContent();
+  check('Tailwind v3 scale', tw3.includes('w-[420px]') && !tw3.includes('w-105'), tw3.slice(0, 160));
+  await option('v4').click();
+
+  // Inline CSS: styles in attributes, pseudo-elements stay as CSS
+  await option('Inline CSS').click();
+  const inlineOut = await preview.textContent();
+  check('Inline CSS in style attributes', inlineOut.includes('style="display: flex; align-items: center; gap: 12px;'), inlineOut.slice(0, 200));
+  check('Inline CSS keeps pseudo rule', inlineOut.includes('div.card::before {') && !inlineOut.includes('div.card {'));
+
+  // Site rules: the page's own CSS, states, media queries, variables
+  await option('Site rules').click();
+  await option('CSS only').click();
+  const siteCss = await preview.textContent();
+  fs.writeFileSync(path.join(artifacts, 'site-rules.txt'), siteCss);
+  const siteMissing = missingIn(siteCss, ['.card {', '.card:hover {', '.card::before {', '@media (max-width: 600px) {', '.btn {', ':root {\n  --brand: #0969da;']);
+  check('Site rules', siteMissing.length === 0, `missing: ${siteMissing.join(' | ')}`);
+  await ui('button[aria-label="Media queries"]').click();
+  check('Site rules without media queries', !(await preview.textContent()).includes('@media'));
+  await ui('button[aria-label="Media queries"]').click();
+  check('Site rules note', (await ui('.el-notes').textContent()).includes('matching rule'));
+
+  // Back to defaults for the rest of the run.
+  await option('CSS').click();
+  await option('Full').click();
+
+  // Element info: box model + selectors
+  await ui('.el-section-head').filter({ hasText: 'Element info' }).click();
+  check('box model content size', (await ui('.el-box-content').textContent()).replace(/\s+/g, ' ').trim() === '420 × 32', await ui('.el-box-content').textContent());
+  const cssSelector = await ui('.el-locator').filter({ hasText: 'CSS selector' }).locator('code').textContent();
+  check('unique CSS selector', (await page.evaluate((s) => document.querySelectorAll(s).length, cssSelector)) === 1, cssSelector);
+  await ui('.el-locator').filter({ hasText: 'CSS selector' }).locator('button').click();
+  await page.waitForTimeout(150);
+  check('copy selector', (await clipboard()) === cssSelector);
+  const playwright = await ui('.el-locator').filter({ hasText: 'Playwright' }).locator('code').textContent();
+  check('Playwright locator', playwright.startsWith('page.'), playwright);
+  await page.screenshot({ path: path.join(artifacts, 'element-info.png') });
+  await ui('.el-section-head').filter({ hasText: 'Element info' }).click();
 
   // Navigation
   await ui('button[title="Parent element"]').click();

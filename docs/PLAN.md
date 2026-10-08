@@ -69,15 +69,16 @@ ElementLens/
 - Left out on purpose until Phase 2: "Copy mode" and "Media query" (only meaningful with authored CSS rules)
 - Verified: 36 unit tests, 48-check browser smoke test (2 consecutive green runs)
 
-## Phase 2: Core converters
-- [ ] Authored CSS: walk `document.styleSheets`, match rules incl. `@media`, `:hover`, pseudo-elements; handle cross-origin `SecurityError`
-- [ ] Tailwind detection (existing classes, grouping by category and variant)
-- [ ] Tailwind converter: computed CSS -> utilities, v4 + v3 scales, nearest-color mapping, arbitrary-value fallback
-- [ ] JSX converter
-- [ ] Selectors tab (unique CSS, XPath, Playwright/Cypress)
-- [ ] Box model tab
-- [ ] Unit tests for all converters with fixtures
-- **Done when:** converter test suite green; Tailwind output of 10 fixture elements renders close to the original.
+## Phase 2: Core converters (done 2026-10-09)
+- [x] Site rules (authored CSS): walks `document.styleSheets` + adopted sheets, `@import`; matches rules incl. `:hover`/`:focus` states and `::before/::after`; skips global resets; `@media` kept (switch) or flattened to active rules; `@supports`/`@container`/`@layer` wrappers kept; used `@keyframes` and resolved CSS variables added; cross-origin sheets counted and reported
+- [x] Tailwind detection: page uses Tailwind (`--tw-*` in its CSS) -> original classes kept
+- [x] Tailwind converter: computed CSS -> utilities, v4 + v3 scales, exact palette matching in OKLab against the real palettes (generated from `tailwindcss@4` / `tailwindcss@3` by `scripts/generate-tailwind-palette.mjs`), arbitrary values and arbitrary properties as fallback, `before:`/`after:` variants
+- [x] Inline CSS style format (pseudo-elements stay as CSS)
+- [x] JSX: React component output (className, htmlFor, style objects, uncontrolled form props, SVG camelCase, self-closing tags, CSS imported from styles.css)
+- [x] Element info section: box model diagram + unique CSS selector, XPath, Playwright and Cypress locators
+- [x] Unit tests for all converters (69 total) + browser smoke test (61 checks)
+- Not done: "Copy mode" option; a visual "renders close to the original" comparison across 10 real sites (moved to Phase 4 QA)
+- Known limits: Tailwind conversion cannot see hover/responsive variants (computed styles are the current state); nested CSS rules inside style rules are not expanded
 
 ## Phase 3: Depth and export
 - [x] Main-world script + message bridge; framework detection (moved to Phase 1.5)

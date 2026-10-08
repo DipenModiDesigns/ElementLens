@@ -9,7 +9,15 @@ Support: [extension@jupiternexa.com](mailto:extension@jupiternexa.com)
 
 ## Status
 
-Phases 1 to 1.6 done. Click the icon (or Alt+Shift+E), hover to highlight, click to pick. The panel shows a compact preview of the code (Show full opens a large popup), lets you choose the output (Full HTML + CSS, HTML only, CSS only, with or without children) and copies it with one button. Export actions: Copy as Markdown, Download .html. Move through the tree with the arrow buttons or the breadcrumb. Esc exits.
+Phases 1 to 2 done. Click the icon (or Alt+Shift+E), hover to highlight, click to pick. The panel shows a compact preview of the code (Show full opens a large popup) and copies it with one button. Copy settings:
+
+- **Component format:** HTML or JSX (React component)
+- **Style format:** CSS (computed), Tailwind (v4 or v3), Inline CSS, or Site rules (the page's own CSS, incl. `:hover` and `@media`)
+- **Output:** Full, markup only or CSS only, with or without children
+
+Element info shows the box model and copyable selectors (CSS, XPath, Playwright, Cypress). Export actions: Copy as Markdown, Download .html. Move through the tree with the arrow buttons or the breadcrumb. Esc exits.
+
+The Tailwind color palettes come from the official packages: `node scripts/generate-tailwind-palette.mjs` regenerates `src/core/convert/tailwind-palette.ts`.
 
 JavaScript extraction is built but switched off ("Coming soon") via `FEATURES.jsTab` in `src/shared/features.ts`.
 

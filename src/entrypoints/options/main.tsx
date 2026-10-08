@@ -32,13 +32,26 @@ function Options() {
       </label>
 
       <label>
-        CSS mode
+        Component format
         <select
-          value={settings.cssMode}
-          onChange={(e) => update('cssMode', e.currentTarget.value as Settings['cssMode'])}
+          value={settings.componentFormat}
+          onChange={(e) => update('componentFormat', e.currentTarget.value as Settings['componentFormat'])}
         >
-          <option value="computed">Computed styles</option>
-          <option value="authored">Authored rules</option>
+          <option value="html">HTML</option>
+          <option value="jsx">JSX (React)</option>
+        </select>
+      </label>
+
+      <label>
+        Style format
+        <select
+          value={settings.styleFormat}
+          onChange={(e) => update('styleFormat', e.currentTarget.value as Settings['styleFormat'])}
+        >
+          <option value="computed">CSS (computed styles)</option>
+          <option value="tailwind">Tailwind</option>
+          <option value="inline">Inline CSS</option>
+          <option value="authored">Site rules (the page's own CSS)</option>
         </select>
       </label>
 

@@ -97,50 +97,94 @@ function withoutBlockified(decls: Declaration[], parent: StyleMap | undefined): 
 
 const NO_STYLE = new Set(['script', 'style', 'noscript', 'template', 'link', 'meta', 'title', 'br', 'wbr']);
 
+export interface PseudoStyle {
+  pseudo: string;
+  decls: Declaration[];
+}
+
+/** Cleaned declarations for one element and its ::before/::after. */
+export interface ElementStyle {
+  decls: Declaration[];
+  pseudos: PseudoStyle[];
+}
+
+export interface StylesResult {
+  root: Element;
+  /** In document order; only elements that were styled (scripts etc. are skipped). */
+  styles: Map<Element, ElementStyle>;
+  includeChildren: boolean;
+  truncated: boolean;
+}
+
 /**
- * CSS from computed styles that differ from browser defaults, for the element, its
- * ::before/::after and optionally all descendants. Child selectors are relative to the root
- * (`div.card > h2`); siblings with identical styles share one rule, others get `:nth-child()`.
+ * Cleaned computed declarations per element: values that differ from browser defaults, with
+ * children only listing inherited values that differ from their parent, flex/grid blockification
+ * and layout-derived child sizes removed. Shared by CSS, Tailwind and inline-style output.
  */
-export function computedCss(root: Element, defaults: DefaultStyleProvider, options: CssOptions = {}): CssResult {
+export function collectStyles(root: Element, defaults: DefaultStyleProvider, options: CssOptions = {}): StylesResult {
   const { includeChildren = false, skip, maxElements = 300 } = options;
-  let count = 0;
+  const styles = new Map<Element, ElementStyle>();
   let truncated = false;
 
-  const ownRules = (el: Element, styles: StyleMap, parent: StyleMap | undefined): Rule[] => {
-    const isRoot = el === root;
+  const visit = (el: Element, parent: StyleMap | undefined) => {
+    const own = readStyleMap(getComputedStyle(el));
     const isSvg = el.namespaceURI === SVG_NS;
-    // Children only list inherited values (color, font...) when they differ from the parent.
-    let decls = withoutBlockified(cleanStyles(styles, defaults.get(el), { isSvg, inheritFrom: parent }), parent);
-    if (!isRoot && !isSvg && !REPLACED.has(el.localName)) {
+    let decls = withoutBlockified(cleanStyles(own, defaults.get(el), { isSvg, inheritFrom: parent }), parent);
+    if (el !== root && !isSvg && !REPLACED.has(el.localName)) {
       // Computed sizes of children come from layout; repeating them as fixed px is misleading.
       decls = decls.filter(([prop]) => prop !== 'width' && prop !== 'height');
     }
-    const rules: Rule[] = decls.length > 0 || isRoot ? [{ path: [], pseudo: '', decls }] : [];
 
+    const pseudos: PseudoStyle[] = [];
     for (const pseudo of PSEUDOS) {
       const pseudoStyles = getComputedStyle(el, pseudo);
       if (!pseudoStyles.content || pseudoStyles.content === 'none' || pseudoStyles.content === 'normal') continue;
       const pseudoDecls = cleanStyles(readStyleMap(pseudoStyles), defaults.get(el, pseudo), {
         isSvg,
         keep: ['content'],
-        inheritFrom: styles,
+        inheritFrom: own,
       });
-      rules.push({ path: [], pseudo, decls: withoutBlockified(pseudoDecls, styles) });
+      // A text ::before/::after is sized by its text; only empty decorative ones need a size.
+      const hasText = /^["'].+["']$/.test(pseudoStyles.content);
+      const sized = hasText ? pseudoDecls.filter(([prop]) => prop !== 'width' && prop !== 'height') : pseudoDecls;
+      pseudos.push({ pseudo, decls: withoutBlockified(sized, own) });
     }
-    return rules;
+    styles.set(el, { decls, pseudos });
+
+    if (!includeChildren) return;
+    for (const child of Array.from(el.children)) {
+      if (skip?.(child) || NO_STYLE.has(child.localName)) continue;
+      if (styles.size >= maxElements) {
+        truncated = true;
+        return;
+      }
+      visit(child, own);
+    }
   };
 
-  const walk = (el: Element, parent: StyleMap | undefined): Rule[] => {
-    count++;
-    const styles = readStyleMap(getComputedStyle(el));
-    const rules = ownRules(el, styles, parent);
+  visit(root, undefined);
+  return { root, styles, includeChildren, truncated };
+}
+
+/**
+ * CSS rules from collected styles. Child selectors are relative to the root (`div.card > h2`);
+ * siblings with identical styles share one rule, others get `:nth-child()`.
+ * `pseudoOnly` emits just ::before/::after rules (used next to inline styles).
+ */
+export function stylesToCss({ root, styles, includeChildren }: StylesResult, options: { pseudoOnly?: boolean } = {}): string {
+  const { pseudoOnly = false } = options;
+
+  const rulesFor = (el: Element): Rule[] => {
+    const style = styles.get(el);
+    if (!style) return [];
+    const rules: Rule[] = [];
+    if (!pseudoOnly && (style.decls.length > 0 || el === root)) rules.push({ path: [], pseudo: '', decls: style.decls });
+    for (const p of style.pseudos) rules.push({ path: [], pseudo: p.pseudo, decls: p.decls });
     if (!includeChildren) return rules;
 
-    const siblings = Array.from(el.children);
     const groups = new Map<string, { child: Element; index: number }[]>();
-    siblings.forEach((child, i) => {
-      if (skip?.(child) || NO_STYLE.has(child.localName)) return;
+    Array.from(el.children).forEach((child, i) => {
+      if (!styles.has(child)) return;
       const step = shortSelector(child);
       const group = groups.get(step) ?? [];
       group.push({ child, index: i + 1 });
@@ -148,20 +192,10 @@ export function computedCss(root: Element, defaults: DefaultStyleProvider, optio
     });
 
     for (const [step, members] of groups) {
-      const subtrees: Rule[][] = [];
-      for (const { child } of members) {
-        if (count >= maxElements) {
-          truncated = true;
-          break;
-        }
-        subtrees.push(walk(child, styles));
-      }
-      const [first] = subtrees;
-      if (!first) continue;
-      const signature = JSON.stringify(first);
-      const shared = subtrees.length === members.length && subtrees.every((r) => JSON.stringify(r) === signature);
-      if (shared) {
-        rules.push(...first.map((r) => ({ ...r, path: [step, ...r.path] })));
+      const subtrees = members.map(({ child }) => rulesFor(child));
+      const signature = JSON.stringify(subtrees[0]);
+      if (subtrees.every((r) => JSON.stringify(r) === signature)) {
+        rules.push(...subtrees[0]!.map((r) => ({ ...r, path: [step, ...r.path] })));
       } else {
         subtrees.forEach((sub, i) => {
           const nth = `${step}:nth-child(${members[i]!.index})`;
@@ -173,8 +207,13 @@ export function computedCss(root: Element, defaults: DefaultStyleProvider, optio
   };
 
   const rootSelector = shortSelector(root);
-  const css = walk(root, undefined)
+  return rulesFor(root)
     .map((r) => formatRule([rootSelector, ...r.path].join(' > ') + r.pseudo, r.decls))
     .join('\n\n');
-  return { css, truncated };
+}
+
+/** CSS from computed styles that differ from browser defaults (element, pseudos, children). */
+export function computedCss(root: Element, defaults: DefaultStyleProvider, options: CssOptions = {}): CssResult {
+  const collected = collectStyles(root, defaults, options);
+  return { css: stylesToCss(collected), truncated: collected.truncated };
 }

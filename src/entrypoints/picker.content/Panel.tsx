@@ -1,18 +1,27 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { BRAND } from '@/shared/brand';
 import { FEATURES } from '@/shared/features';
-import { DEFAULT_SETTINGS, loadSettings, saveSettings, type OutputType, type Settings } from '@/shared/settings';
+import {
+  DEFAULT_SETTINGS,
+  loadSettings,
+  saveSettings,
+  type ComponentFormat,
+  type OutputType,
+  type Settings,
+  type StyleFormat,
+} from '@/shared/settings';
 import { describeElement, elementPath } from '@/core/extract/describe';
-import { serializeHtml } from '@/core/extract/html';
-import { computedCss, createDefaultStyleProvider } from '@/core/extract/computed-css';
+import { createDefaultStyleProvider } from '@/core/extract/computed-css';
 import { formatJsReport } from '@/core/extract/js';
 import { toMarkdown } from '@/core/export/markdown';
-import { fileSlug, fullSnippet, standaloneDocument } from '@/core/export/snippet';
+import { fileSlug, standaloneDocument } from '@/core/export/snippet';
 import { CodeView } from './CodeView';
+import { ElementInfo } from './ElementInfo';
 import { copyText } from './clipboard';
 import { downloadText } from './download';
 import { neighbours } from './dom';
 import { collectJs } from './js';
+import { buildOutputs, type Outputs } from './output';
 import { Modal, OptionGroup, Section, Switch, type Option } from './ui';
 
 type CodeKind = OutputType | 'js';
@@ -32,25 +41,22 @@ const WIDTH = 360;
 const PREVIEW_LINES = 9;
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
 
-const OUTPUT_OPTIONS: Option<OutputType | 'js'>[] = [
-  { value: 'full', label: 'Full' },
-  { value: 'html', label: 'HTML only' },
-  { value: 'css', label: 'CSS only' },
-  { value: 'js', label: 'JavaScript', soon: !FEATURES.jsTab },
+const COMPONENT_OPTIONS: Option<ComponentFormat>[] = [
+  { value: 'html', label: 'HTML' },
+  { value: 'jsx', label: 'JSX' },
 ];
-const COPY_LABEL: Record<CodeKind, string> = {
-  full: 'Copy HTML + CSS',
-  html: 'Copy HTML',
-  css: 'Copy CSS',
-  js: 'Copy JavaScript',
-};
-const MODAL_TABS: { kind: CodeKind; label: string }[] = [
-  { kind: 'full', label: 'Full' },
-  { kind: 'html', label: 'HTML' },
-  { kind: 'css', label: 'CSS' },
-  { kind: 'js', label: 'JS' },
+const STYLE_OPTIONS: Option<StyleFormat>[] = [
+  { value: 'computed', label: 'CSS' },
+  { value: 'tailwind', label: 'Tailwind' },
+  { value: 'inline', label: 'Inline CSS' },
+  { value: 'authored', label: 'Site rules' },
 ];
-const language = (kind: CodeKind) => (kind === 'css' ? 'css' : kind === 'js' ? 'js' : 'html');
+const TAILWIND_OPTIONS: Option<'v4' | 'v3'>[] = [
+  { value: 'v4', label: 'v4' },
+  { value: 'v3', label: 'v3' },
+];
+
+const markupLabel = (format: ComponentFormat) => (format === 'jsx' ? 'JSX' : 'HTML');
 
 function ComingSoonJs() {
   return (
@@ -85,21 +91,31 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
   const defaults = useMemo(() => createDefaultStyleProvider(container), [container]);
   useEffect(() => () => defaults.dispose(), [defaults]);
 
-  const { includeChildren, outputType } = settings;
+  const { includeChildren, outputType, componentFormat, styleFormat, tailwindVersion, mediaQueries } = settings;
   const label = selected ? describeElement(selected) : '';
+  const markupName = markupLabel(componentFormat);
 
-  const out = useMemo(() => {
+  const out = useMemo((): Outputs | null => {
     if (!selected) return null;
-    if (!selected.isConnected) return { html: '', css: '', full: '', note: 'This element was removed from the page.' };
-    const skip = (n: Node) => n === host;
-    const html = serializeHtml(selected, { baseUrl: document.baseURI, includeChildren, skip });
-    const css = computedCss(selected, defaults, { includeChildren, skip });
-    const note =
-      html.truncated || css.truncated
-        ? 'Output truncated: this element is very large.'
-        : 'CSS: computed styles that differ from browser defaults.';
-    return { html: html.html, css: css.css, full: fullSnippet(html.html, css.css), note };
-  }, [selected, includeChildren, refreshKey, host, defaults]);
+    if (!selected.isConnected) return { markup: '', css: '', full: '', notes: ['This element was removed from the page.'] };
+    return buildOutputs(
+      selected,
+      { componentFormat, styleFormat, tailwindVersion, includeChildren, mediaQueries },
+      { host, defaults },
+    );
+  }, [selected, componentFormat, styleFormat, tailwindVersion, includeChildren, mediaQueries, refreshKey, host, defaults]);
+
+  const language = (kind: CodeKind) => {
+    if (kind === 'css') return 'css';
+    if (kind === 'js' || (kind === 'full' && componentFormat === 'jsx')) return 'js';
+    return 'html';
+  };
+  const kindLabel = (kind: CodeKind) =>
+    ({ full: 'Full', html: markupName, css: 'CSS', js: 'JS' })[kind];
+  const copyLabel = (kind: CodeKind) => {
+    if (kind === 'full') return out?.css ? `Copy ${markupName} + CSS` : `Copy ${markupName}`;
+    return { html: `Copy ${markupName}`, css: 'Copy CSS', js: 'Copy JavaScript' }[kind];
+  };
 
   useEffect(() => {
     if (!FEATURES.jsTab || !selected) return setJs('');
@@ -112,7 +128,11 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
     };
   }, [selected, includeChildren, refreshKey, host, label]);
 
-  const codeFor = (kind: CodeKind) => (kind === 'js' ? js : (out?.[kind] ?? ''));
+  const codeFor = (kind: CodeKind) => {
+    if (kind === 'js') return js;
+    if (kind === 'html') return out?.markup ?? '';
+    return out?.[kind] ?? '';
+  };
   const current = codeFor(outputType);
 
   // Esc closes the popup first. Window capture runs before the App's document listener.
@@ -144,17 +164,28 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
   const copyMarkdown = () =>
     copy(
       toMarkdown(label, [
-        { label: 'HTML', language: 'html', code: out?.html ?? '' },
+        { label: markupName, language: componentFormat, code: out?.markup ?? '' },
         { label: 'CSS', language: 'css', code: out?.css ?? '' },
         { label: 'JavaScript', language: 'js', code: js },
       ]),
       'markdown',
     );
+  // A downloadable page must be HTML, so JSX settings are rendered as HTML here.
   const download = () => {
-    if (!out?.html) return;
-    downloadText(`elementlens-${fileSlug(label)}.html`, standaloneDocument(out.html, out.css, label), 'text/html', container);
+    if (!selected?.isConnected) return;
+    const page =
+      componentFormat === 'html' && out
+        ? out
+        : buildOutputs(selected, { ...settings, componentFormat: 'html' }, { host, defaults });
+    downloadText(`elementlens-${fileSlug(label)}.html`, standaloneDocument(page.markup, page.css, label), 'text/html', container);
     flash('download');
   };
+  const outputOptions: Option<CodeKind>[] = [
+    { value: 'full', label: 'Full' },
+    { value: 'html', label: `${markupName} only` },
+    { value: 'css', label: 'CSS only' },
+    { value: 'js', label: 'JavaScript', soon: !FEATURES.jsTab },
+  ];
 
   const onDragStart = (e: PointerEvent) => {
     if ((e.target as Element).closest('button')) return;
@@ -233,32 +264,40 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
               <Section title="Copy settings" open={settings.settingsOpen} onToggle={() => update({ settingsOpen: !settings.settingsOpen })}>
                 <OptionGroup
                   label="Component format"
-                  hint="Markup flavour of the copied code."
-                  value="html"
-                  onChange={() => {}}
-                  options={[
-                    { value: 'html', label: 'HTML' },
-                    { value: 'jsx', label: 'JSX', soon: true },
-                  ]}
+                  hint="HTML markup, or a React component in JSX."
+                  value={componentFormat}
+                  onChange={(v) => update({ componentFormat: v })}
+                  options={COMPONENT_OPTIONS}
                 />
                 <OptionGroup
                   label="Style format"
-                  hint="How styles are written. Computed CSS lists the final values the browser uses."
-                  value="computed"
-                  onChange={() => {}}
-                  options={[
-                    { value: 'computed', label: 'CSS' },
-                    { value: 'tailwind', label: 'Tailwind', soon: true },
-                    { value: 'inline', label: 'Inline CSS', soon: true },
-                    { value: 'authored', label: 'Site rules', soon: true },
-                  ]}
+                  hint="CSS: final computed values. Tailwind: utility classes. Inline CSS: style attributes. Site rules: the page's own CSS rules, incl. :hover and @media."
+                  value={styleFormat}
+                  onChange={(v) => update({ styleFormat: v })}
+                  options={STYLE_OPTIONS}
                 />
+                {styleFormat === 'tailwind' && (
+                  <OptionGroup
+                    label="Tailwind version"
+                    value={tailwindVersion}
+                    onChange={(v) => update({ tailwindVersion: v })}
+                    options={TAILWIND_OPTIONS}
+                  />
+                )}
+                {styleFormat === 'authored' && (
+                  <Switch
+                    label="Media queries"
+                    hint="On: keep @media blocks for all screen sizes. Off: only the rules active right now."
+                    checked={mediaQueries}
+                    onChange={(v) => update({ mediaQueries: v })}
+                  />
+                )}
                 <OptionGroup
                   label="Output"
-                  hint="What the Copy button copies. Full is a <style> block plus the HTML, ready to paste."
+                  hint="What the Copy button copies. Full is ready to paste: a <style> block plus HTML, or a CSS file plus a component."
                   value={outputType}
                   onChange={(v) => v !== 'js' && update({ outputType: v })}
-                  options={OUTPUT_OPTIONS}
+                  options={outputOptions}
                 />
                 <Switch
                   label="Include children"
@@ -281,11 +320,21 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
                   Show full
                 </button>
               </div>
-              <p class="el-note">{out.note}</p>
+              <div class="el-notes">
+                {out.notes.map((note) => (
+                  <p key={note} class="el-note">
+                    {note}
+                  </p>
+                ))}
+              </div>
+
+              <Section title="Element info" open={settings.infoOpen} onToggle={() => update({ infoOpen: !settings.infoOpen })}>
+                <ElementInfo element={selected} refreshKey={refreshKey} copied={copied} onCopy={copy} />
+              </Section>
 
               <Section title="Export actions" open={settings.exportOpen} onToggle={() => update({ exportOpen: !settings.exportOpen })}>
                 <div class="el-actions">
-                  <button class="el-btn el-action" onClick={copyMarkdown} title="HTML and CSS as Markdown code blocks">
+                  <button class="el-btn el-action" onClick={copyMarkdown} title={`${markupName} and CSS as Markdown code blocks`}>
                     {copied === 'markdown' ? 'Copied!' : 'Copy as Markdown'}
                   </button>
                   <button class="el-btn el-action" onClick={download} title="A standalone page that renders this element">
@@ -297,7 +346,7 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
 
             <footer class="el-footer">
               <button class="el-btn el-copy-main" onClick={() => copy(current, 'main')} disabled={!current}>
-                {copied === 'main' ? 'Copied!' : COPY_LABEL[outputType]}
+                {copied === 'main' ? 'Copied!' : copyLabel(outputType)}
               </button>
             </footer>
           </>
@@ -308,16 +357,16 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
         <Modal title={label} onClose={() => setModal(null)}>
           <div class="el-modal-toolbar">
             <div class="el-tabs" role="tablist">
-              {MODAL_TABS.map((t) => (
+              {(['full', 'html', 'css', 'js'] as const).map((kind) => (
                 <button
-                  key={t.kind}
+                  key={kind}
                   role="tab"
-                  aria-selected={modal === t.kind}
-                  class={`el-tab ${modal === t.kind ? 'el-tab-active' : ''}`}
-                  onClick={() => setModal(t.kind)}
+                  aria-selected={modal === kind}
+                  class={`el-tab ${modal === kind ? 'el-tab-active' : ''}`}
+                  onClick={() => setModal(kind)}
                 >
-                  {t.label}
-                  {jsSoon(t.kind) && <span class="el-badge">Soon</span>}
+                  {kindLabel(kind)}
+                  {jsSoon(kind) && <span class="el-badge">Soon</span>}
                 </button>
               ))}
             </div>

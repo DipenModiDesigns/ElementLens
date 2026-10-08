@@ -10,7 +10,8 @@ export interface Token {
 
 const TAG_OPEN = /<\/?[^\s>/]+/y;
 const TAG_END = /\s*\/?>/y;
-const ATTR = /(\s+)([^\s=>/]+)(?:(=)("[^"]*"|'[^']*'|[^\s>]+))?/y;
+// Values: quoted, JSX expressions ({...} or {{ ... }}), or bare.
+const ATTR = /(\s+)([^\s=>/]+)(?:(=)("[^"]*"|'[^']*'|\{\{[\s\S]*?\}\}|\{[^}]*\}|[^\s>]+))?/y;
 
 function match(re: RegExp, code: string, at: number): RegExpExecArray | null {
   re.lastIndex = at;

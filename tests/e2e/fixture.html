@@ -9,7 +9,10 @@
           border-radius: 8px; background: #fff; color: #333; width: 420px; }
   .card::before { content: "\2605"; color: gold; }
   .card h2 { margin: 0; font-size: 20px; }
-  .btn { padding: 8px 14px; border-radius: 6px; background: #0969da; color: #fff; border: 0; }
+  :root { --brand: #0969da; }
+  .card:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+  @media (max-width: 600px) { .card { width: auto; } }
+  .btn { padding: 8px 14px; border-radius: 6px; background: var(--brand); color: #fff; border: 0; }
   .scroller { height: 80px; overflow: auto; border: 1px dashed #999; margin-top: 20px; width: 300px; }
 </style>
 </head>
