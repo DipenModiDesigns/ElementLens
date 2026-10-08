@@ -9,6 +9,14 @@ Upload packages from the [v0.1.1 release](https://github.com/DipenModiDesigns/El
 | Chrome Web Store, Edge Add-ons | `element-lens-0.1.1-chrome.zip` |
 | Firefox Add-ons | `element-lens-0.1.1-firefox.zip` + `element-lens-0.1.1-sources.zip` |
 
+## Submission status
+
+| Store | Status | IDs / link |
+|---|---|---|
+| Microsoft Edge Add-ons | 0.1.1 submitted 2026-10-09, in review (Microsoft: up to 7 business days) | Store ID `0RDCKFCSZF4Z`, CRX ID `mamagbpglmhnghjgoimhbgmalaknhmpm`, Product ID `e884b092-6582-4d5d-8618-a2a8423a2389`; URL after publishing |
+| Chrome Web Store | Not submitted yet | |
+| Firefox Add-ons | Not submitted yet | |
+
 ## Decisions
 
 | Topic | Decision |
