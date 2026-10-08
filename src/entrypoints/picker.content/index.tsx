@@ -1,6 +1,7 @@
 import { createShadowRootUi, defineContentScript } from '#imports';
 import { render } from 'preact';
 import { App } from './App';
+import { loadPanelFonts } from './fonts';
 import './style.css';
 import './panel.css';
 
@@ -21,6 +22,8 @@ export default defineContentScript({
       window.__elementLens.close();
       return;
     }
+
+    loadPanelFonts();
 
     const close = () => {
       ui.remove();

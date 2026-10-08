@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Support | ElementLens</title>
+    <meta name="description" content="Help, troubleshooting and contact for ElementLens." />
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png" />
+    <meta name="theme-color" content="#030304" />
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="index.html"><img src="assets/icon.svg" alt="" /><span>ElementLens<span class="dot">.</span></span></a>
+        <nav class="nav" aria-label="Main">
+          <a href="index.html#features">Features</a>
+          <a href="support.html" aria-current="page">Support</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="about.html">About</a>
+          <a class="nav-cta" href="download.html">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="page">
+      <div class="wrap prose">
+        <p class="eyebrow">Help</p>
+        <h1>Support<span class="dot">.</span></h1>
+        <p class="meta">Something not working, or an idea? We read every message.</p>
+
+        <h2>Contact</h2>
+        <ul>
+          <li>Email: <a href="mailto:extension@jupiternexa.com">extension@jupiternexa.com</a></li>
+          <li>Bugs and feature requests: <a href="https://github.com/DipenModiDesigns/ElementLens/issues">GitHub issues</a></li>
+        </ul>
+        <p>When reporting a problem, include your browser and version, the page address (if public) and what you expected to see.</p>
+
+        <h2>Troubleshooting</h2>
+        <details>
+          <summary>Nothing happens when I click the icon</summary>
+          <p>Browsers block all extensions on their own pages (<code>chrome://</code>, <code>about:</code>, the extension stores, the built-in PDF viewer). The icon briefly shows a red "!" there. Try a normal website.</p>
+        </details>
+        <details>
+          <summary>The shortcut Alt+Shift+E does not work</summary>
+          <p>Another extension may use it. Change it at <code>chrome://extensions/shortcuts</code> (Edge: <code>edge://extensions/shortcuts</code>, Firefox: Add-ons > gear icon > Manage Extension Shortcuts).</p>
+        </details>
+        <details>
+          <summary>"Site rules" shows fewer rules than expected</summary>
+          <p>Stylesheets loaded from other domains (for example a CDN) cannot be read by extensions. The panel says how many were skipped. Switch to the "CSS" style format for the full computed result.</p>
+        </details>
+        <details>
+          <summary>The copied code looks different from the page</summary>
+          <p>Computed styles describe the current state only: hover effects, animations and other screen sizes are not included. "Site rules" keeps :hover and @media rules. Content inside iframes from other domains and closed shadow DOM cannot be read.</p>
+        </details>
+        <details>
+          <summary>The panel is off screen or too wide</summary>
+          <p>Open the ElementLens settings (right-click the icon > Options) and use "Reset panel position".</p>
+        </details>
+
+        <h2>Known limits</h2>
+        <ul>
+          <li>JavaScript extraction is coming soon. Browsers never expose listeners added with <code>addEventListener</code> to extensions.</li>
+          <li>Tailwind classes generated from computed styles cannot include hover or responsive variants.</li>
+          <li>Elements inside cross-origin iframes cannot be picked yet.</li>
+        </ul>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span>© 2026 JupiterNexa. Made by <a href="about.html">Dipen Modi</a>.</span>
+        <nav aria-label="Footer">
+          <a href="download.html">Download</a>
+          <a href="support.html">Support</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="https://github.com/DipenModiDesigns/ElementLens">GitHub</a>
+          <a href="mailto:extension@jupiternexa.com">extension@jupiternexa.com</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

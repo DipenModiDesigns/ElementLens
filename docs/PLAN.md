@@ -94,6 +94,7 @@ ElementLens/
 - [ ] Firefox build + manual QA pass (event page background, `world: MAIN`, clipboard)
 - [ ] QA on Edge, Brave, Opera (same Chromium zip)
 - [ ] Extend the Playwright smoke test (started in Phase 1) with more fixture pages
+- [ ] Manual check in real Chrome: several downloads in a row (.html, JSON, .svg) from one page. Headless Chromium sometimes drops the second one (likely its multiple-downloads protection). If real Chrome prompts, switch to `downloads.download()` via an optional `downloads` permission requested on first use
 - [ ] Edge cases: iframes (same-origin), open shadow DOM, SVG, very large elements, pages with strict CSP
 - [ ] Performance check: content script size, hover fps
 - [ ] Store assets: icons, screenshots, description, privacy policy page

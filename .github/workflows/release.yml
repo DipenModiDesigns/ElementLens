@@ -1,0 +1,30 @@
+# Builds the Chrome and Firefox zips and attaches them to a GitHub release.
+# Trigger: push a version tag, e.g.  git tag v0.1.0 && git push origin v0.1.0
+# The website's "Download latest release" button points at the newest release.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run compile
+      - run: npm test
+      - run: npm run zip
+      - run: npm run zip:firefox
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: .output/*.zip
+          generate_release_notes: true

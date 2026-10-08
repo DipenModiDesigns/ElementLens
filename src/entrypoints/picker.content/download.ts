@@ -7,8 +7,8 @@ export function downloadText(filename: string, text: string, type: string, conta
   // Firefox only follows links that are in the document.
   container.append(link);
   link.click();
-  link.remove();
-  // Generous delay: on a busy machine the browser may start reading the blob late, and a
-  // revoked URL makes the download fail silently.
+  // The browser starts the download asynchronously after the click. Removing the link or
+  // revoking the URL right away can make it drop the download silently, so clean up later.
+  setTimeout(() => link.remove(), 1000);
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

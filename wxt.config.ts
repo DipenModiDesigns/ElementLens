@@ -23,8 +23,19 @@ export default defineConfig({
     description:
       'Pick any element on a page and get its HTML, CSS, Tailwind, JSX and more. Free, private, no data leaves your browser.',
     author: 'Dipen Modi (JupiterNexa)',
+    homepage_url: 'https://dipenmodidesigns.github.io/ElementLens/',
     // Only the current tab, only after the user clicks. No host permissions.
     permissions: ['activeTab', 'scripting', 'storage'],
+    // The panel's bundled fonts are loaded from the page context (FontFace), so they must be
+    // web-accessible. This exposes only the two font files and grants no host access.
+    // Chromium: a per-session dynamic URL, so sites cannot probe for the extension.
+    web_accessible_resources: [
+      {
+        resources: ['fonts/*.woff2'],
+        matches: ['<all_urls>'],
+        ...(browser !== 'firefox' && { use_dynamic_url: true }),
+      },
+    ],
     // No default_popup: a toolbar click fires action.onClicked and toggles pick mode.
     action: {
       default_title: 'ElementLens: pick an element (Alt+Shift+E)',

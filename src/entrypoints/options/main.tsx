@@ -24,7 +24,9 @@ function Options() {
 
   return (
     <main>
-      <h1>{BRAND.name} settings</h1>
+      <h1>
+        {BRAND.name} settings<span>.</span>
+      </h1>
 
       <label>
         Tailwind version
@@ -54,8 +56,8 @@ function Options() {
           value={settings.styleFormat}
           onChange={(e) => update('styleFormat', e.currentTarget.value as Settings['styleFormat'])}
         >
+          <option value="tailwind">Tailwind (default)</option>
           <option value="computed">CSS (computed styles)</option>
-          <option value="tailwind">Tailwind</option>
           <option value="inline">Inline CSS</option>
           <option value="authored">Site rules (the page's own CSS)</option>
         </select>
@@ -85,6 +87,9 @@ function Options() {
       <footer>
         Free extension by {BRAND.author}, {BRAND.company}. Help and feedback:{' '}
         <a href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a>
+        <br />
+        <a href={BRAND.website} target="_blank" rel="noopener">Website</a> ·{' '}
+        <a href={BRAND.privacy} target="_blank" rel="noopener">Privacy policy</a>
       </footer>
     </main>
   );

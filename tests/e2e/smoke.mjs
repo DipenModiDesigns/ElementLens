@@ -78,6 +78,15 @@ try {
   await panel.waitFor({ timeout: 5000 });
   check('panel opens after injection', await panel.isVisible());
   check('empty state hint shown', (await panel.textContent()).includes('Hover over the page'));
+  await page.waitForFunction(
+    () => [...document.fonts].filter((f) => f.family.includes('ElementLens') && f.status === 'loaded').length === 2,
+    null,
+    { timeout: 5000 },
+  ).catch(() => {});
+  const fontStatus = await page.evaluate(() =>
+    [...document.fonts].filter((f) => f.family.includes('ElementLens')).map((f) => `${f.family}:${f.status}`),
+  );
+  check('panel fonts loaded', fontStatus.length === 2 && fontStatus.every((s) => s.endsWith(':loaded')), fontStatus.join(', '));
   const box = await panel.boundingBox();
   check('panel docked top-right', box.x > 800 && box.y < 40 && Math.round(box.width) === 360, JSON.stringify(box));
 
@@ -97,8 +106,17 @@ try {
   const current = ui('.el-crumb-current');
   check('breadcrumb current', (await current.textContent()) === 'div.card…', await current.textContent());
 
-  // Preview: default output "Full" = HTML followed by a <style> block, clipped with a gradient fade.
+  // Tailwind is the default style format and listed first.
   const preview = ui('.el-preview .el-code');
+  const styleGroup = ui('.el-group[aria-label="Style format"] .el-option');
+  check('Tailwind listed first', (await styleGroup.first().textContent()) === 'Tailwind', await styleGroup.first().textContent());
+  check('Tailwind is the default', (await ui('.el-option-on').allTextContents()).includes('Tailwind'));
+  const twDefault = await preview.textContent();
+  check('default output uses Tailwind classes', twDefault.includes('class="flex items-center gap-3') && !twDefault.includes('<style>'), twDefault.slice(0, 120));
+  // The rest of the run starts from computed CSS.
+  await ui('.el-option').filter({ hasText: /^CSS$/ }).click();
+
+  // Preview: output "Full" = HTML followed by a <style> block, clipped with a gradient fade.
   const fullOut = await preview.textContent();
   check(
     'preview defaults to Full (HTML, then CSS)',
@@ -271,10 +289,22 @@ try {
   await page.screenshot({ path: path.join(artifacts, 'assets.png') });
   await ui('.el-section-head').filter({ hasText: 'Assets' }).click();
 
-  const [jsonDownload] = await Promise.all([
-    page.waitForEvent('download', { timeout: 15000 }),
-    ui('.el-action').filter({ hasText: 'Download JSON' }).click(),
-  ]);
+  const jsonEvent = page.waitForEvent('download', { timeout: 15000 }).catch(() => null);
+  const jsonClick = await ui('.el-action')
+    .filter({ hasText: 'Download JSON' })
+    .click({ timeout: 8000 })
+    .then(
+      () => 'ok',
+      (e) => e.message.split('\n').slice(0, 8).join(' | '),
+    );
+  // Read right away: the label resets 1.5 s after a successful run of the handler.
+  const jsonLabel = await ui('.el-action').nth(2).textContent();
+  const jsonDownload = await jsonEvent;
+  if (!jsonDownload) {
+    // Seen ~1 in 3 runs: our handler ran, but headless Chromium did not start a second
+    // download from the same page (likely its multiple-downloads protection).
+    throw new Error(`no download event for JSON (click: ${jsonClick}; button showed "${jsonLabel}")`);
+  }
   const json = JSON.parse(fs.readFileSync(await jsonDownload.path(), 'utf8'));
   check('JSON file name', jsonDownload.suggestedFilename() === 'elementlens-div-card-md-flex.json', jsonDownload.suggestedFilename());
   check(

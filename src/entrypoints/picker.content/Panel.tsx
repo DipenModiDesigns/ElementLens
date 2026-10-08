@@ -51,8 +51,8 @@ const COMPONENT_OPTIONS: Option<ComponentFormat>[] = [
   { value: 'jsx', label: 'JSX' },
 ];
 const STYLE_OPTIONS: Option<StyleFormat>[] = [
-  { value: 'computed', label: 'CSS' },
   { value: 'tailwind', label: 'Tailwind' },
+  { value: 'computed', label: 'CSS' },
   { value: 'inline', label: 'Inline CSS' },
   { value: 'authored', label: 'Site rules' },
 ];
@@ -281,7 +281,10 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
             drag.current = null;
           }}
         >
-          <strong class="el-title">{BRAND.name}</strong>
+          <strong class="el-title">
+            {BRAND.name}
+            <span class="el-dot">.</span>
+          </strong>
           <div class="el-header-actions">
             <button class={`el-btn ${picking ? 'el-btn-active' : ''}`} onClick={onPickStart} title="Pick an element on the page">
               {picking ? 'Picking…' : 'Pick'}
@@ -332,7 +335,7 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
                 />
                 <OptionGroup
                   label="Style format"
-                  hint="CSS: final computed values. Tailwind: utility classes. Inline CSS: style attributes. Site rules: the page's own CSS rules, incl. :hover and @media."
+                  hint="Tailwind: utility classes. CSS: final computed values. Inline CSS: style attributes. Site rules: the page's own CSS rules, incl. :hover and @media."
                   value={styleFormat}
                   onChange={(v) => update({ styleFormat: v })}
                   options={STYLE_OPTIONS}

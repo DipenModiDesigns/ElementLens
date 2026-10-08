@@ -1,55 +1,72 @@
 /* Lives inside the Shadow DOM: page styles cannot reach it, and it cannot reach the page.
-   Only class selectors here, so the hidden default-style reference elements stay unstyled. */
+   Only class selectors here, so the hidden default-style reference elements stay unstyled.
+   Design system from https://dipenmodidesigns.github.io/: near-black surfaces, teal accent,
+   gold call to action, Archivo (display) + Space Grotesk (text), loaded in fonts.ts. */
 
 .el-root {
+  --el-font: 'ElementLens Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --el-font-display: 'ElementLens Archivo', 'ElementLens Grotesk', system-ui, sans-serif;
+  --el-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --el-cta: #d4a20c;
+  --el-cta-hover: #b8890a;
+  --el-cta-fg: #000000;
+  --el-gold: #fbbf24;
+
+  /* Light */
   --el-bg: #ffffff;
-  --el-bg-soft: #f6f8fa;
-  --el-fg: #1f2328;
-  --el-muted: #656d76;
-  --el-border: #d0d7de;
-  --el-accent: #0969da;
+  --el-bg-soft: #f5f5f8;
+  --el-fg: #0c0c10;
+  --el-muted: #5b5b6e;
+  --el-border: #e4e4eb;
+  --el-accent: #0d9488;
   --el-accent-fg: #ffffff;
-  --tk-tag: #116329;
-  --tk-attr: #953800;
-  --tk-value: #0a3069;
-  --tk-comment: #6e7781;
-  --tk-prop: #0550ae;
-  --tk-selector: #8250df;
-  font: 13px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --el-accent-soft: #14b8a61f;
+  --el-shadow: 0 16px 48px rgba(12, 12, 16, 0.18);
+  --tk-tag: #0f766e;
+  --tk-attr: #b45309;
+  --tk-value: #0e7490;
+  --tk-comment: #8b8b9e;
+  --tk-prop: #0d9488;
+  --tk-selector: #7c3aed;
+  font: 13px/1.5 var(--el-font);
   color: var(--el-fg);
 }
 
 .el-root[data-theme='dark'] {
-  --el-bg: #1f2328;
-  --el-bg-soft: #161b22;
-  --el-fg: #e6edf3;
-  --el-muted: #9198a1;
-  --el-border: #3d444d;
-  --el-accent: #4493f8;
-  --el-accent-fg: #0d1117;
-  --tk-tag: #7ee787;
-  --tk-attr: #ffa657;
-  --tk-value: #a5d6ff;
-  --tk-comment: #8b949e;
-  --tk-prop: #79c0ff;
-  --tk-selector: #d2a8ff;
+  --el-bg: #0c0c10;
+  --el-bg-soft: #07070a;
+  --el-fg: #f0f0f5;
+  --el-muted: #8b8b9e;
+  --el-border: #ffffff17;
+  --el-accent: #14b8a6;
+  --el-accent-fg: #000000;
+  --el-accent-soft: #14b8a626;
+  --el-shadow: 0 20px 60px #000000cc, 0 0 0 1px #14b8a61a;
+  --tk-tag: #5eead4;
+  --tk-attr: #fbbf24;
+  --tk-value: #67e8f9;
+  --tk-comment: #6b6b80;
+  --tk-prop: #2dd4bf;
+  --tk-selector: #a78bfa;
 }
 
 @media (prefers-color-scheme: dark) {
   .el-root[data-theme='system'] {
-    --el-bg: #1f2328;
-    --el-bg-soft: #161b22;
-    --el-fg: #e6edf3;
-    --el-muted: #9198a1;
-    --el-border: #3d444d;
-    --el-accent: #4493f8;
-    --el-accent-fg: #0d1117;
-    --tk-tag: #7ee787;
-    --tk-attr: #ffa657;
-    --tk-value: #a5d6ff;
-    --tk-comment: #8b949e;
-    --tk-prop: #79c0ff;
-    --tk-selector: #d2a8ff;
+    --el-bg: #0c0c10;
+    --el-bg-soft: #07070a;
+    --el-fg: #f0f0f5;
+    --el-muted: #8b8b9e;
+    --el-border: #ffffff17;
+    --el-accent: #14b8a6;
+    --el-accent-fg: #000000;
+    --el-accent-soft: #14b8a626;
+    --el-shadow: 0 20px 60px #000000cc, 0 0 0 1px #14b8a61a;
+    --tk-tag: #5eead4;
+    --tk-attr: #fbbf24;
+    --tk-value: #67e8f9;
+    --tk-comment: #6b6b80;
+    --tk-prop: #2dd4bf;
+    --tk-selector: #a78bfa;
   }
 }
 
@@ -95,19 +112,20 @@
   display: flex;
   gap: 8px;
   max-width: 270px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: #1f2328;
-  color: #ffffff;
+  padding: 3px 9px;
+  border: 1px solid #14b8a64d;
+  border-radius: 999px;
+  background: #0c0c10;
+  color: #f0f0f5;
   font: 12px/18px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   white-space: nowrap;
 }
 .el-label-name {
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #7ee787;
+  color: #5eead4;
 }
 .el-label-size {
-  color: #c9d1d9;
+  color: #8b8b9e;
 }
 

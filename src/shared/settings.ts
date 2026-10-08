@@ -34,7 +34,7 @@ export const DEFAULT_SETTINGS: Settings = {
   tailwindVersion: 'v4',
   theme: 'system',
   componentFormat: 'html',
-  styleFormat: 'computed',
+  styleFormat: 'tailwind',
   mediaQueries: true,
   outputType: 'full',
   includeChildren: true,

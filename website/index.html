@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ElementLens: copy HTML, CSS and Tailwind from any element</title>
+    <meta
+      name="description"
+      content="ElementLens is a free browser extension. Pick any element on a web page and copy its HTML, CSS, Tailwind or JSX, ready to paste. No account, no tracking."
+    />
+    <meta name="theme-color" content="#030304" />
+    <meta property="og:title" content="ElementLens: copy HTML, CSS and Tailwind from any element" />
+    <meta property="og:description" content="Free browser extension. Pick any element and get clean, paste-ready code." />
+    <meta property="og:image" content="assets/icon-512.png" />
+    <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <link rel="preload" href="assets/fonts/Archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/SpaceGrotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="index.html"><img src="assets/icon.svg" alt="" /><span>ElementLens<span class="dot">.</span></span></a>
+        <nav class="nav" aria-label="Main">
+          <a href="#features">Features</a>
+          <a href="support.html">Support</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="about.html">About</a>
+          <a class="nav-cta" href="download.html">Download</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <div class="hero">
+        <div class="wrap">
+          <div class="hero-copy">
+            <p class="eyebrow">Free browser extension</p>
+            <h1>Copy any element<span class="dot">.</span></h1>
+            <p class="lead">
+              Pick an element on any web page and get its HTML, CSS, Tailwind classes or a React component. Clean,
+              paste-ready, in one click.
+            </p>
+            <div class="chips">
+              <span class="chip"><strong>4</strong> style formats</span>
+              <span class="chip"><strong>HTML</strong> or JSX</span>
+              <span class="chip"><strong>0</strong> data collected</span>
+            </div>
+            <div class="cta">
+              <a class="btn btn-primary" href="download.html">Download ElementLens</a>
+              <a class="btn" href="#features">See what it does</a>
+            </div>
+          </div>
+          <button class="shot-zoom" type="button" data-zoom="zoom-dialog" aria-label="Enlarge screenshot">
+            <img
+              class="shot"
+              src="assets/screenshot.png"
+              width="880"
+              height="800"
+              alt="ElementLens panel next to a selected element, showing the copy settings and a code preview"
+            />
+            <span class="zoom-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M16.5 16.5 21 21M11 8v6M8 11h6" />
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <dialog id="zoom-dialog" class="lightbox" aria-label="Screenshot, full size">
+        <button class="lightbox-close" type="button" data-close aria-label="Close">×</button>
+        <img
+          src="assets/screenshot-full.png"
+          width="1280"
+          height="800"
+          loading="lazy"
+          alt="Full view: the ElementLens website with a feature card selected and the ElementLens panel open on the right"
+        />
+      </dialog>
+
+      <section id="features">
+        <div class="wrap">
+          <div class="section-title">
+            <p class="eyebrow">Features</p>
+            <h2><em>Everything you need</em><br />to rebuild an element</h2>
+            <p>No digging through DevTools. Pick it, choose a format, copy.</p>
+          </div>
+          <div class="grid">
+            <article class="card">
+              <div class="icon" aria-hidden="true">⌖</div>
+              <h3>Pick anything</h3>
+              <p>Hover to see the box model (margin, border, padding), click to select. Links and buttons on the page do not fire while you pick.</p>
+            </article>
+            <article class="card">
+              <div class="icon" aria-hidden="true">&lt;/&gt;</div>
+              <h3>HTML or JSX</h3>
+              <p>Clean, indented markup with absolute URLs, or a ready React component with className and style objects.</p>
+            </article>
+            <article class="card">
+              <div class="icon" aria-hidden="true">#</div>
+              <h3>Four style formats</h3>
+              <p>Computed CSS, Tailwind classes (v4 or v3), inline styles, or the site's own CSS rules including :hover and @media.</p>
+            </article>
+            <article class="card">
+              <div class="icon" aria-hidden="true">✦</div>
+              <h3>Clean output</h3>
+              <p>Only styles that matter: browser defaults, duplicates and noise are filtered, shorthands merged, children included.</p>
+            </article>
+            <article class="card">
+              <div class="icon" aria-hidden="true">◐</div>
+              <h3>Assets</h3>
+              <p>See the colors, fonts, images and SVG icons an element uses. Copy a hex value or download an icon as .svg.</p>
+            </article>
+            <article class="card">
+              <div class="icon" aria-hidden="true">{}</div>
+              <h3>Selectors and export</h3>
+              <p>Unique CSS selector, XPath, Playwright and Cypress locators. Export as Markdown, a standalone .html file or JSON.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-alt">
+        <div class="wrap">
+          <div class="section-title">
+            <p class="eyebrow">How it works</p>
+            <h2>Three steps<span class="dot">.</span></h2>
+          </div>
+          <ol class="steps">
+            <li><strong>Open ElementLens</strong><span>Click the toolbar icon or press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>.</span></li>
+            <li><strong>Pick an element</strong><span>Hover and click. Use the arrows or breadcrumb to move to a parent or child.</span></li>
+            <li><strong>Copy</strong><span>Choose HTML or JSX and a style format, check the preview, press Copy.</span></li>
+          </ol>
+        </div>
+      </section>
+
+      <section>
+        <div class="wrap">
+          <div class="callout">
+            <div class="badge-icon" aria-hidden="true">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+            </div>
+            <div>
+              <h2>Nothing leaves your browser<span class="dot">.</span></h2>
+              <p>No account, no tracking, no servers. ElementLens only reads the tab you click it on, and only after you click.</p>
+            </div>
+            <a class="btn" href="privacy.html">Privacy policy</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-alt">
+        <div class="wrap">
+          <div class="section-title">
+            <p class="eyebrow">FAQ</p>
+            <h2>Questions<span class="dot">.</span></h2>
+          </div>
+          <details>
+            <summary>Is it really free?</summary>
+            <p>Yes. No paid tier, no ads, no account.</p>
+          </details>
+          <details>
+            <summary>Which browsers are supported?</summary>
+            <p>Chrome, Edge, Brave, Opera and Vivaldi (all Chromium), and Firefox 140 or newer. Safari is planned.</p>
+          </details>
+          <details>
+            <summary>Does it copy JavaScript too?</summary>
+            <p>Not yet. Event handlers and framework components (React, Vue, jQuery) are coming soon. Note that browsers never let extensions read listeners added with addEventListener, so that part will always be partial.</p>
+          </details>
+          <details>
+            <summary>Why is some CSS missing in "Site rules"?</summary>
+            <p>Browsers block reading stylesheets loaded from other domains. ElementLens tells you how many it had to skip. The "CSS" format always shows the full computed result.</p>
+          </details>
+          <details>
+            <summary>Does the Tailwind output include hover and responsive variants?</summary>
+            <p>If the page already uses Tailwind, its original classes are kept, including variants. Otherwise classes are generated from the current computed styles, which only show the current state.</p>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <span>© 2026 JupiterNexa. Made by <a href="about.html">Dipen Modi</a>.</span>
+        <nav aria-label="Footer">
+          <a href="download.html">Download</a>
+          <a href="support.html">Support</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="https://github.com/DipenModiDesigns/ElementLens">GitHub</a>
+          <a href="mailto:extension@jupiternexa.com">extension@jupiternexa.com</a>
+        </nav>
+      </div>
+    </footer>
+    <script src="assets/site.js" defer></script>
+  </body>
+</html>
