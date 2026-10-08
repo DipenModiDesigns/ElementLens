@@ -19,7 +19,9 @@ export default defineConfig({
     },
   },
   manifest: ({ browser }) => ({
-    name: 'ElementLens',
+    // Store listing name (Chrome and Edge read it from here); short_name for tight spaces.
+    name: 'ElementLens: Copy HTML, CSS & Tailwind',
+    short_name: 'ElementLens',
     description:
       'Pick any element and copy clean HTML, CSS, Tailwind or JSX. Free and private: no account, no tracking, nothing leaves your browser.',
     author: 'Dipen Modi (JupiterNexa)',

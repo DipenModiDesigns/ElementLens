@@ -1,18 +1,21 @@
 # Store listings
 
-Copy-paste texts and answers for the Chrome Web Store, Microsoft Edge Add-ons and Firefox Add-ons (AMO). Version 0.1.0. Images are in `assets/store/` (regenerate: `npm run build && node scripts/render-store-assets.mjs`).
+Copy-paste texts and answers for the Chrome Web Store, Microsoft Edge Add-ons and Firefox Add-ons (AMO). Version 0.1.1, MIT licensed. Images are in `assets/store/` (regenerate: `npm run build && node scripts/render-store-assets.mjs`).
 
-Upload packages from the [v0.1.0 release](https://github.com/DipenModiDesigns/ElementLens/releases/tag/v0.1.0) or run `npm run zip` / `npm run zip:firefox`:
+Upload packages from the [v0.1.1 release](https://github.com/DipenModiDesigns/ElementLens/releases/tag/v0.1.1) or run `npm run zip` / `npm run zip:firefox`:
 
 | Store | Package |
 |---|---|
-| Chrome Web Store, Edge Add-ons | `element-lens-0.1.0-chrome.zip` |
-| Firefox Add-ons | `element-lens-0.1.0-firefox.zip` + `element-lens-0.1.0-sources.zip` |
+| Chrome Web Store, Edge Add-ons | `element-lens-0.1.1-chrome.zip` |
+| Firefox Add-ons | `element-lens-0.1.1-firefox.zip` + `element-lens-0.1.1-sources.zip` |
 
-## Open decisions (before submitting)
+## Decisions
 
-1. **Listing name.** Chrome and Edge take the name from `manifest.json`. Recommended: `ElementLens: Copy HTML, CSS & Tailwind` (37 characters) with `short_name: ElementLens` for the toolbar. Needs a manifest change and a new version (0.1.1).
-2. **License.** AMO asks for one, and the GitHub repo has none yet. Options: MIT (open source) or "All Rights Reserved".
+| Topic | Decision |
+|---|---|
+| Listing name | `ElementLens: Copy HTML, CSS & Tailwind` (manifest `name`); `short_name` and the panel use `ElementLens` |
+| License | MIT (`LICENSE` in the repo) |
+| Version for the first store submission | 0.1.1 |
 
 ---
 
@@ -139,20 +142,20 @@ Dashboard: https://partner.microsoft.com/dashboard/microsoftedge (free developer
 Dashboard: https://addons.mozilla.org/developers/ (free account).
 
 - Distribution: **On this site** (listed).
-- Package: `element-lens-0.1.0-firefox.zip`.
-- Source code: **Yes**, upload `element-lens-0.1.0-sources.zip` (the extension is built and minified by Vite, so AMO reviewers need the source).
+- Package: `element-lens-0.1.1-firefox.zip`.
+- Source code: **Yes**, upload `element-lens-0.1.1-sources.zip` (the extension is built and minified by Vite, so AMO reviewers need the source).
 - Summary: the Firefox summary above.
 - Description: the detailed description above.
 - Categories: Web Development.
 - Tags: choose from AMO's predefined list, for example "web development" and "developer tools" if offered.
 - Support email, support website, homepage, privacy policy: see Links.
-- License: see Open decisions.
+- License: **MIT License**.
 - Notes to reviewer:
   > Built with WXT (Vite) and TypeScript. To reproduce the package from the attached source:
   > 1. Node.js 22 and npm 10 or newer.
   > 2. `npm ci`
   > 3. `npm run zip:firefox`
-  > The output is `.output/element-lens-0.1.0-firefox.zip`.
+  > The output is `.output/element-lens-0.1.1-firefox.zip`.
   >
   > No remote code and no network requests. Bundled fonts (Archivo, Space Grotesk, SIL Open Font License) are web-accessible only so the panel can register them with FontFace. To test: open any website, click the toolbar icon (or Alt+Shift+E), click an element, press Copy.
 
@@ -162,4 +165,4 @@ Dashboard: https://addons.mozilla.org/developers/ (free account).
 
 1. Replace "Coming soon" on `website/download.html` with the store links.
 2. Add the store links to `README.md`.
-3. For every update: raise `version` in `package.json`, push a new tag (`v0.1.1`), upload the new zips to each store.
+3. For every update: raise `version` in `package.json`, push a new tag (for example `v0.1.2`), upload the new zips to each store.

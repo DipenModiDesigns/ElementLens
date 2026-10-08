@@ -1,10 +1,11 @@
 {
   "name": "element-lens",
   "description": "Pick any element on a page and get its HTML, CSS, Tailwind, JSX and more.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "author": "Dipen Modi <extension@jupiternexa.com>",
+  "license": "MIT",
   "scripts": {
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox --mv3",

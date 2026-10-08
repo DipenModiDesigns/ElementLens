@@ -89,3 +89,7 @@ git push origin v0.1.0
 ## Permissions
 
 Only `activeTab`, `scripting` and `storage`. The extension gets access to a tab only after you click it, and never declares host permissions.
+
+## License
+
+MIT, see [LICENSE](LICENSE). Bundled fonts (Archivo, Space Grotesk) are under the SIL Open Font License 1.1.
