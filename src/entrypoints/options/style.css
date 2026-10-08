@@ -24,7 +24,8 @@ label {
   border-bottom: 1px solid color-mix(in srgb, CanvasText 15%, transparent);
 }
 
-select {
+select,
+button {
   font: inherit;
   padding: 4px 8px;
 }

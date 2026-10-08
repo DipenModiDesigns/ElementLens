@@ -1,11 +1,17 @@
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { BRAND } from '@/shared/brand';
-import { DEFAULT_SETTINGS, loadSettings, saveSettings, type Settings } from '@/shared/settings';
+import { DEFAULT_SETTINGS, loadSettings, panelItem, saveSettings, type Settings } from '@/shared/settings';
 import './style.css';
 
 function Options() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [reset, setReset] = useState(false);
+
+  const resetPanel = async () => {
+    await panelItem.removeValue();
+    setReset(true);
+  };
 
   useEffect(() => {
     loadSettings().then(setSettings);
@@ -65,6 +71,13 @@ function Options() {
           <option value="light">Light</option>
           <option value="dark">Dark</option>
         </select>
+      </label>
+
+      <label>
+        Panel position and width
+        <button type="button" onClick={resetPanel} disabled={reset}>
+          {reset ? 'Reset' : 'Reset to default'}
+        </button>
       </label>
 
       <p class="hint">Shortcut: Alt+Shift+E (change it in your browser's extension shortcuts page).</p>

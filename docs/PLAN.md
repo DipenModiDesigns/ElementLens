@@ -80,14 +80,15 @@ ElementLens/
 - Not done: "Copy mode" option; a visual "renders close to the original" comparison across 10 real sites (moved to Phase 4 QA)
 - Known limits: Tailwind conversion cannot see hover/responsive variants (computed styles are the current state); nested CSS rules inside style rules are not expanded
 
-## Phase 3: Depth and export
+## Phase 3: Depth and export (done 2026-10-09)
 - [x] Main-world script + message bridge; framework detection (moved to Phase 1.5)
 - [x] JS tab with clear "partial info" labelling (moved to Phase 1.5)
 - [x] "Copy all" as Markdown (moved to Phase 1.5); light/dark panel theme (Phase 1)
-- [ ] Assets tab (colors, fonts, images, SVG, CSS variables)
-- [ ] Standalone HTML download (inlined styles), JSON download
-- [ ] Persisted panel position/size
-- **Done when:** feature-complete for v1 on Chrome.
+- [x] Assets section: colors (swatches with uses: text, background, border, shadow, outline, fill, stroke, decoration), fonts actually rendered (stack, weights, sizes, sample), images (`<img>` currentSrc, CSS backgrounds incl. pseudo-elements, video posters, SVG `<image>`) with Open / Copy URL, inline SVG icons (cleaned of scripts and handlers) with preview, Copy and Download .svg. CSS variables are covered by Site rules.
+- [x] Standalone HTML download (Phase 1.6) and JSON download (element tree with attributes, text, cleaned styles, pseudos, page box; plus URL, title, selector, timestamp)
+- [x] Panel position and width remembered per device (`local:panel`); "Reset panel position" on the settings page
+- Fix found under heavy CPU load: blob URLs for downloads were revoked after 1 s, which can fail a download silently; now 60 s
+- Verified: 73 unit tests, 72-check browser smoke test (6 consecutive green runs)
 
 ## Phase 4: Cross-browser and release
 - [ ] Firefox build + manual QA pass (event page background, `world: MAIN`, clipboard)

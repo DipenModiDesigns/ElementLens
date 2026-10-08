@@ -18,7 +18,17 @@ export interface Settings {
   settingsOpen: boolean;
   exportOpen: boolean;
   infoOpen: boolean;
+  assetsOpen: boolean;
 }
+
+/** Panel position and width. Stored per device (local), since screens differ. */
+export interface PanelPlacement {
+  x: number;
+  y: number;
+  width: number;
+}
+
+export const panelItem = storage.defineItem<PanelPlacement | null>('local:panel', { fallback: null });
 
 export const DEFAULT_SETTINGS: Settings = {
   tailwindVersion: 'v4',
@@ -31,6 +41,7 @@ export const DEFAULT_SETTINGS: Settings = {
   settingsOpen: true,
   exportOpen: false,
   infoOpen: false,
+  assetsOpen: false,
 };
 
 export const settingsItem = storage.defineItem<Settings>('sync:settings', {

@@ -8,7 +8,7 @@
   .card { display: flex; gap: 12px; align-items: center; padding: 16px 24px; border: 1px solid #ddd;
           border-radius: 8px; background: #fff; color: #333; width: 420px; }
   .card::before { content: "\2605"; color: gold; }
-  .card h2 { margin: 0; font-size: 20px; }
+  .card h2 { margin: 0; font-size: 20px; background-image: url("img/bg.png"); }
   :root { --brand: #0969da; }
   .card:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
   @media (max-width: 600px) { .card { width: auto; } }
@@ -21,7 +21,7 @@
     <div class="card md:flex" x-data="{ open: false }">
       <img src="img/logo.png" alt="" width="32" height="32">
       <h2>Product title</h2>
-      <button class="btn" onclick="window.pageClicked = true">Buy</button>
+      <button class="btn" onclick="window.pageClicked = true">Buy<svg class="icon" viewBox="0 0 10 10" width="12" height="12" onclick="alert(1)"><path d="M0 0h10v10z" fill="currentColor"/></svg></button>
     </div>
   </a>
   <button id="outside" onclick="window.pageClicked = true">Outside</button>

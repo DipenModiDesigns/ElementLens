@@ -8,5 +8,7 @@ export function downloadText(filename: string, text: string, type: string, conta
   container.append(link);
   link.click();
   link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  // Generous delay: on a busy machine the browser may start reading the blob late, and a
+  // revoked URL makes the download fail silently.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

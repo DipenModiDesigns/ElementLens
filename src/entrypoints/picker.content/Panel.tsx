@@ -5,16 +5,21 @@ import {
   DEFAULT_SETTINGS,
   loadSettings,
   saveSettings,
+  panelItem,
   type ComponentFormat,
   type OutputType,
   type Settings,
   type StyleFormat,
 } from '@/shared/settings';
+import { browser } from '#imports';
 import { describeElement, elementPath } from '@/core/extract/describe';
-import { createDefaultStyleProvider } from '@/core/extract/computed-css';
+import { collectStyles, createDefaultStyleProvider } from '@/core/extract/computed-css';
 import { formatJsReport } from '@/core/extract/js';
+import { uniqueSelector } from '@/core/extract/selector';
+import { elementToJson } from '@/core/export/json';
 import { toMarkdown } from '@/core/export/markdown';
 import { fileSlug, standaloneDocument } from '@/core/export/snippet';
+import { Assets } from './Assets';
 import { CodeView } from './CodeView';
 import { ElementInfo } from './ElementInfo';
 import { copyText } from './clipboard';
@@ -77,12 +82,42 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
   const [modal, setModal] = useState<CodeKind | null>(null);
   const [js, setJs] = useState('');
   const [pos, setPos] = useState(() => ({ x: Math.max(16, innerWidth - WIDTH - 16), y: 16 }));
+  const [width, setWidth] = useState(WIDTH);
   const drag = useRef<{ dx: number; dy: number } | null>(null);
   const crumbs = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLElement>(null);
 
   useEffect(() => {
     loadSettings().then(setSettings);
+    // Restore the saved placement, kept inside the current viewport.
+    panelItem.getValue().then((saved) => {
+      if (!saved) return;
+      const w = clamp(saved.width, 320, innerWidth - 16);
+      setWidth(w);
+      setPos({ x: clamp(saved.x, 0, Math.max(0, innerWidth - w)), y: clamp(saved.y, 0, Math.max(0, innerHeight - 80)) });
+    });
   }, []);
+
+  const savePlacement = (x: number, y: number) =>
+    panelItem.setValue({ x, y, width: panel.current?.offsetWidth ?? width });
+
+  // The panel is resizable (CSS resize); save the width when the user changes it.
+  useEffect(() => {
+    const el = panel.current;
+    if (!el) return;
+    let timer = 0;
+    const observer = new ResizeObserver(() => {
+      clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (Math.abs(el.offsetWidth - width) > 1) savePlacement(pos.x, pos.y);
+      }, 300);
+    });
+    observer.observe(el);
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [pos, width]);
   const update = (patch: Partial<Settings>) => {
     setSettings((s) => ({ ...s, ...patch }));
     saveSettings(patch);
@@ -180,6 +215,18 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
     downloadText(`elementlens-${fileSlug(label)}.html`, standaloneDocument(page.markup, page.css, label), 'text/html', container);
     flash('download');
   };
+  const downloadJson = () => {
+    if (!selected?.isConnected) return;
+    const collected = collectStyles(selected, defaults, { includeChildren, skip: (n) => n === host });
+    const json = elementToJson(collected, {
+      generator: `${BRAND.name} ${browser.runtime.getManifest().version}`,
+      url: location.href,
+      title: document.title,
+      selector: uniqueSelector(selected),
+    });
+    downloadText(`elementlens-${fileSlug(label)}.json`, JSON.stringify(json, null, 2), 'application/json', container);
+    flash('json');
+  };
   const outputOptions: Option<CodeKind>[] = [
     { value: 'full', label: 'Full' },
     { value: 'html', label: `${markupName} only` },
@@ -218,8 +265,22 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
 
   return (
     <>
-      <section class="el-panel" style={{ left: `${pos.x}px`, top: `${pos.y}px`, width: `${WIDTH}px` }} role="dialog" aria-label={BRAND.name}>
-        <header class="el-header" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={() => (drag.current = null)}>
+      <section
+        ref={panel}
+        class="el-panel"
+        style={{ left: `${pos.x}px`, top: `${pos.y}px`, width: `${width}px` }}
+        role="dialog"
+        aria-label={BRAND.name}
+      >
+        <header
+          class="el-header"
+          onPointerDown={onDragStart}
+          onPointerMove={onDragMove}
+          onPointerUp={() => {
+            if (drag.current) savePlacement(pos.x, pos.y);
+            drag.current = null;
+          }}
+        >
           <strong class="el-title">{BRAND.name}</strong>
           <div class="el-header-actions">
             <button class={`el-btn ${picking ? 'el-btn-active' : ''}`} onClick={onPickStart} title="Pick an element on the page">
@@ -332,6 +393,18 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
                 <ElementInfo element={selected} refreshKey={refreshKey} copied={copied} onCopy={copy} />
               </Section>
 
+              <Section title="Assets" open={settings.assetsOpen} onToggle={() => update({ assetsOpen: !settings.assetsOpen })}>
+                <Assets
+                  element={selected}
+                  includeChildren={includeChildren}
+                  host={host}
+                  container={container}
+                  refreshKey={refreshKey}
+                  copied={copied}
+                  onCopy={copy}
+                />
+              </Section>
+
               <Section title="Export actions" open={settings.exportOpen} onToggle={() => update({ exportOpen: !settings.exportOpen })}>
                 <div class="el-actions">
                   <button class="el-btn el-action" onClick={copyMarkdown} title={`${markupName} and CSS as Markdown code blocks`}>
@@ -339,6 +412,9 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
                   </button>
                   <button class="el-btn el-action" onClick={download} title="A standalone page that renders this element">
                     {copied === 'download' ? 'Downloaded!' : 'Download .html'}
+                  </button>
+                  <button class="el-btn el-action" onClick={downloadJson} title="Element tree with attributes, text, styles and positions">
+                    {copied === 'json' ? 'Downloaded!' : 'Download JSON'}
                   </button>
                 </div>
               </Section>

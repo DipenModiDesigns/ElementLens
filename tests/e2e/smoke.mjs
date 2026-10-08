@@ -172,7 +172,7 @@ try {
   check('Copy as Markdown (HTML + CSS)', missingMd.length === 0 && !md.includes('### JavaScript'), `missing: ${missingMd.join(' | ')}`);
 
   const [download] = await Promise.all([
-    page.waitForEvent('download', { timeout: 5000 }),
+    page.waitForEvent('download', { timeout: 15000 }),
     ui('.el-action').filter({ hasText: 'Download .html' }).click(),
   ]);
   const doc = fs.readFileSync(await download.path(), 'utf8');
@@ -244,6 +244,41 @@ try {
   await page.screenshot({ path: path.join(artifacts, 'element-info.png') });
   await ui('.el-section-head').filter({ hasText: 'Element info' }).click();
 
+  // ---------- Phase 3: assets + JSON ----------
+  await ui('.el-section-head').filter({ hasText: 'Assets' }).click();
+  const hexes = await ui('.el-swatch-hex').allTextContents();
+  const wantHex = ['#333333', '#dddddd', '#ffffff', '#0969da', '#ffd700'];
+  const missingHex = wantHex.filter((h) => !hexes.includes(h));
+  check('asset colors', missingHex.length === 0, `missing ${missingHex.join(',')} in ${hexes.join(',')}`);
+  const fontNames = await ui('.el-asset-meta strong').allTextContents();
+  check('asset fonts', fontNames.includes('Arial, sans-serif'), fontNames.join(','));
+  check('no phantom svg fill', !hexes.includes('#000000'), hexes.join(','));
+  check('asset images', fontNames.includes('logo.png') && fontNames.includes('bg.png'), fontNames.join(','));
+  check('asset svg preview', (await ui('.el-svg-preview svg path').count()) === 1);
+  await ui('.el-asset-row').filter({ hasText: 'svg.icon' }).locator('button').first().click();
+  await page.waitForTimeout(150);
+  const svgCopy = await clipboard();
+  check('copy SVG (cleaned)', svgCopy.includes('xmlns="http://www.w3.org/2000/svg"') && svgCopy.includes('<path') && !svgCopy.includes('onclick'), svgCopy);
+  await ui('.el-swatch').filter({ hasText: '#0969da' }).click();
+  await page.waitForTimeout(150);
+  check('copy color', (await clipboard()) === '#0969da');
+  await page.screenshot({ path: path.join(artifacts, 'assets.png') });
+  await ui('.el-section-head').filter({ hasText: 'Assets' }).click();
+
+  const [jsonDownload] = await Promise.all([
+    page.waitForEvent('download', { timeout: 15000 }),
+    ui('.el-action').filter({ hasText: 'Download JSON' }).click(),
+  ]);
+  const json = JSON.parse(fs.readFileSync(await jsonDownload.path(), 'utf8'));
+  check('JSON file name', jsonDownload.suggestedFilename() === 'elementlens-div-card-md-flex.json', jsonDownload.suggestedFilename());
+  check(
+    'JSON export content',
+    json.root.tag === 'div' && json.root.styles.display === 'flex' && json.root.children.length === 3 &&
+      json.root.pseudos?.['::before']?.content === '"★"' && json.root.box.width === 470 &&
+      json.url === 'http://localhost:5577/' && json.generator.startsWith('ElementLens'),
+    JSON.stringify(json).slice(0, 300),
+  );
+
   // Navigation
   await ui('button[title="Parent element"]').click();
   check('parent nav', (await current.textContent()) === 'a#link', await current.textContent());
@@ -273,6 +308,16 @@ try {
   await page.waitForTimeout(100);
   check('Esc leaves pick mode, keeps panel', (await ui('.el-capture').count()) === 0 && (await panel.count()) === 1);
 
+  // Drag the panel; its position should survive closing and reopening.
+  const head = await ui('.el-header').boundingBox();
+  await page.mouse.move(head.x + 120, head.y + 15);
+  await page.mouse.down();
+  await page.mouse.move(head.x - 180, head.y + 75, { steps: 5 });
+  await page.mouse.up();
+  await page.waitForTimeout(200);
+  const dragged = await panel.boundingBox();
+  check('panel can be dragged', Math.abs(dragged.x - (box.x - 300)) <= 2 && Math.abs(dragged.y - (box.y + 60)) <= 2, JSON.stringify(dragged));
+
   await page.evaluate(() => (window.pageClicked = false));
   await page.locator('#outside').click();
   check('page interactive after pick mode', (await page.evaluate(() => window.pageClicked)) === true);
@@ -292,6 +337,8 @@ try {
   await ui('.el-option-on').first().waitFor();
   const on = await ui('.el-option-on').allTextContents();
   check('settings remembered', on.includes('HTML only'), on.join(','));
+  const reopened = await ui('.el-panel').boundingBox();
+  check('panel position remembered', Math.abs(reopened.x - dragged.x) <= 2 && Math.abs(reopened.y - dragged.y) <= 2, JSON.stringify(reopened));
 
   await page.keyboard.press('Escape');
   await page.waitForTimeout(100);

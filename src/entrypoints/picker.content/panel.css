@@ -493,6 +493,132 @@
   font-size: 11px;
 }
 
+/* ---------- Assets ---------- */
+
+.el-asset-group + .el-asset-group {
+  margin-top: 12px;
+}
+.el-asset-group .el-group-label {
+  margin-top: 8px;
+}
+.el-count {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--el-bg-soft);
+  font-weight: 600;
+}
+
+.el-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 6px;
+}
+.el-swatch {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  align-items: center;
+  gap: 0 6px;
+  padding: 5px 6px;
+  border: 1px solid var(--el-border);
+  border-radius: 6px;
+  background: var(--el-bg);
+  color: var(--el-fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.el-swatch:hover {
+  border-color: var(--el-accent);
+}
+.el-swatch-chip {
+  grid-row: 1 / span 2;
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  /* Checkerboard; the color is painted over it as an inset shadow, so transparency shows. */
+  background: conic-gradient(#ccc 25%, #fff 0 50%, #ccc 0 75%, #fff 0) 0 0 / 8px 8px;
+}
+.el-swatch-hex {
+  font: 11px/1.3 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.el-swatch-use {
+  overflow: hidden;
+  color: var(--el-muted);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.el-asset-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.el-asset-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--el-border);
+}
+.el-asset-row:last-child {
+  border-bottom: 0;
+}
+.el-asset-meta {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 12px;
+}
+.el-asset-meta strong {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.el-asset-meta .el-note {
+  margin: 0;
+}
+.el-asset-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.el-font-sample {
+  flex: none;
+  width: 34px;
+  font-size: 20px;
+  line-height: 1;
+  text-align: center;
+}
+
+.el-thumb,
+.el-svg-preview {
+  flex: none;
+  box-sizing: border-box;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--el-border);
+  border-radius: 6px;
+  background: var(--el-bg-soft);
+  object-fit: contain;
+}
+.el-svg-preview {
+  padding: 4px;
+  color: var(--el-fg);
+  pointer-events: none;
+}
+.el-svg-preview svg {
+  display: block;
+}
+
 /* ---------- Footer ---------- */
 
 .el-footer {
