@@ -84,6 +84,6 @@ export function buildOutputs(
   const name = componentName(el);
   const component = wrapComponent(html.html, name);
   const markup = css ? `import './styles.css';\n\n${component}` : component;
-  const full = css ? `/* styles.css */\n${css}\n\n/* ${name}.jsx */\n${markup}` : markup;
+  const full = css ? `/* ${name}.jsx */\n${markup}\n\n/* styles.css */\n${css}` : markup;
   return { markup, css, full, notes };
 }

@@ -97,10 +97,14 @@ try {
   const current = ui('.el-crumb-current');
   check('breadcrumb current', (await current.textContent()) === 'div.card…', await current.textContent());
 
-  // Preview: default output "Full" = <style> block + HTML, clipped with a gradient fade.
+  // Preview: default output "Full" = HTML followed by a <style> block, clipped with a gradient fade.
   const preview = ui('.el-preview .el-code');
   const fullOut = await preview.textContent();
-  check('preview defaults to Full', fullOut.startsWith('<style>\ndiv.card {') && fullOut.includes(CARD_OPEN), fullOut.slice(0, 60));
+  check(
+    'preview defaults to Full (HTML, then CSS)',
+    fullOut.startsWith(CARD_OPEN) && fullOut.includes('</div>\n\n<style>\ndiv.card {') && fullOut.endsWith('</style>'),
+    fullOut.slice(0, 60),
+  );
   check('preview clipped with fade', (await ui('.el-preview-fade').count()) === 1);
   const previewBox = await preview.boundingBox();
   check('preview is compact', previewBox.height <= 152, JSON.stringify(previewBox));
@@ -171,10 +175,12 @@ try {
   const missingMd = wantMd.filter((w) => !md.includes(w));
   check('Copy as Markdown (HTML + CSS)', missingMd.length === 0 && !md.includes('### JavaScript'), `missing: ${missingMd.join(' | ')}`);
 
-  const [download] = await Promise.all([
-    page.waitForEvent('download', { timeout: 15000 }),
-    ui('.el-action').filter({ hasText: 'Download .html' }).click(),
-  ]);
+  const downloadEvent = page.waitForEvent('download', { timeout: 15000 }).catch(() => null);
+  await ui('.el-action').filter({ hasText: 'Download .html' }).click();
+  // "Downloaded!" means our code ran; a missing event then points at the browser side.
+  const buttonAfter = await ui('.el-action').nth(1).textContent();
+  const download = await downloadEvent;
+  if (!download) throw new Error(`no download event for .html (button shows "${buttonAfter}")`);
   const doc = fs.readFileSync(await download.path(), 'utf8');
   check('download file name', download.suggestedFilename() === 'elementlens-div-card-md-flex.html', download.suggestedFilename());
   check('download is standalone page', doc.startsWith('<!doctype html>') && doc.includes('<style>') && doc.includes('div.card > h2 {') && doc.includes('<div class="card'));
@@ -190,7 +196,7 @@ try {
   const jsxFull = await preview.textContent();
   fs.writeFileSync(path.join(artifacts, 'jsx-output.txt'), jsxFull);
   const jsxMissing = missingIn(jsxFull, [
-    '/* styles.css */\ndiv.card {', "import './styles.css';", 'export default function Card() {',
+    "/* Card.jsx */\nimport './styles.css';", 'export default function Card() {', '}\n\n/* styles.css */\ndiv.card {',
     `<div className="card md:flex" x-data="{ open: false }">`, '<img src="http://localhost:5577/img/logo.png" alt="" width="32" height="32" />',
   ]);
   check('JSX full output', jsxMissing.length === 0 && !jsxFull.includes('onclick'), `missing: ${jsxMissing.join(' | ')}`);

@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { fileSlug, fullSnippet, standaloneDocument } from '@/core/export/snippet';
 
 describe('fullSnippet', () => {
-  it('puts a style block before the markup', () => {
+  it('puts the style block after the markup', () => {
     expect(fullSnippet('<p>hi</p>', 'p {\n  color: red;\n}')).toBe(
-      '<style>\np {\n  color: red;\n}\n</style>\n\n<p>hi</p>',
+      '<p>hi</p>\n\n<style>\np {\n  color: red;\n}\n</style>',
     );
   });
 

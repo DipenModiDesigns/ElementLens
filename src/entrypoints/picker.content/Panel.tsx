@@ -355,7 +355,7 @@ export function Panel({ host, container, picking, selected, onPickStart, onSelec
                 )}
                 <OptionGroup
                   label="Output"
-                  hint="What the Copy button copies. Full is ready to paste: a <style> block plus HTML, or a CSS file plus a component."
+                  hint="What the Copy button copies. Full is ready to paste: HTML followed by a <style> block, or a component followed by its CSS file."
                   value={outputType}
                   onChange={(v) => v !== 'js' && update({ outputType: v })}
                   options={outputOptions}

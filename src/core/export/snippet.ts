@@ -1,7 +1,7 @@
-/** HTML + CSS as one paste-ready snippet: a <style> block followed by the markup. */
+/** HTML + CSS as one paste-ready snippet: the markup followed by a <style> block. */
 export function fullSnippet(html: string, css: string): string {
   if (!css.trim()) return html;
-  return `<style>\n${css}\n</style>\n\n${html}`;
+  return `${html}\n\n<style>\n${css}\n</style>`;
 }
 
 const escapeText = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
