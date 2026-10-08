@@ -1,0 +1,35 @@
+{
+  "name": "element-lens",
+  "description": "Pick any element on a page and get its HTML, CSS, Tailwind, JSX and more.",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "author": "Dipen Modi <extension@jupiternexa.com>",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox --mv3",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox --mv3",
+    "build:all": "wxt build && wxt build -b firefox --mv3",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox --mv3",
+    "compile": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --write .",
+    "postinstall": "wxt prepare",
+    "test:e2e": "npm run build && node tests/e2e/smoke.mjs"
+  },
+  "dependencies": {
+    "preact": "^11.0.1"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.6",
+    "happy-dom": "^20.14.5",
+    "playwright": "^1.64.0",
+    "prettier": "^3.9.9",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3",
+    "wxt": "^0.21.4"
+  }
+}

@@ -1,0 +1,113 @@
+/* Lives inside the Shadow DOM: page styles cannot reach it, and it cannot reach the page.
+   Only class selectors here, so the hidden default-style reference elements stay unstyled. */
+
+.el-root {
+  --el-bg: #ffffff;
+  --el-bg-soft: #f6f8fa;
+  --el-fg: #1f2328;
+  --el-muted: #656d76;
+  --el-border: #d0d7de;
+  --el-accent: #0969da;
+  --el-accent-fg: #ffffff;
+  --tk-tag: #116329;
+  --tk-attr: #953800;
+  --tk-value: #0a3069;
+  --tk-comment: #6e7781;
+  --tk-prop: #0550ae;
+  --tk-selector: #8250df;
+  font: 13px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--el-fg);
+}
+
+.el-root[data-theme='dark'] {
+  --el-bg: #1f2328;
+  --el-bg-soft: #161b22;
+  --el-fg: #e6edf3;
+  --el-muted: #9198a1;
+  --el-border: #3d444d;
+  --el-accent: #4493f8;
+  --el-accent-fg: #0d1117;
+  --tk-tag: #7ee787;
+  --tk-attr: #ffa657;
+  --tk-value: #a5d6ff;
+  --tk-comment: #8b949e;
+  --tk-prop: #79c0ff;
+  --tk-selector: #d2a8ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  .el-root[data-theme='system'] {
+    --el-bg: #1f2328;
+    --el-bg-soft: #161b22;
+    --el-fg: #e6edf3;
+    --el-muted: #9198a1;
+    --el-border: #3d444d;
+    --el-accent: #4493f8;
+    --el-accent-fg: #0d1117;
+    --tk-tag: #7ee787;
+    --tk-attr: #ffa657;
+    --tk-value: #a5d6ff;
+    --tk-comment: #8b949e;
+    --tk-prop: #79c0ff;
+    --tk-selector: #d2a8ff;
+  }
+}
+
+/* ---------- Capture layer and overlay ---------- */
+
+.el-capture {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483645;
+  cursor: crosshair;
+  background: transparent;
+}
+
+.el-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  pointer-events: none;
+}
+
+.el-box {
+  position: fixed;
+  box-sizing: border-box;
+  border-style: solid;
+  border-width: 0;
+}
+
+.el-margin {
+  border-color: rgba(246, 178, 107, 0.6);
+}
+.el-border {
+  border-color: rgba(255, 229, 153, 0.7);
+}
+.el-padding {
+  border-color: rgba(147, 196, 125, 0.55);
+}
+.el-content {
+  background: rgba(111, 168, 220, 0.55);
+}
+
+.el-label {
+  position: fixed;
+  display: flex;
+  gap: 8px;
+  max-width: 270px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #1f2328;
+  color: #ffffff;
+  font: 12px/18px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: nowrap;
+}
+.el-label-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #7ee787;
+}
+.el-label-size {
+  color: #c9d1d9;
+}
+

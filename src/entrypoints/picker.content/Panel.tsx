@@ -1,0 +1,337 @@
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { BRAND } from '@/shared/brand';
+import { FEATURES } from '@/shared/features';
+import { DEFAULT_SETTINGS, loadSettings, saveSettings, type OutputType, type Settings } from '@/shared/settings';
+import { describeElement, elementPath } from '@/core/extract/describe';
+import { serializeHtml } from '@/core/extract/html';
+import { computedCss, createDefaultStyleProvider } from '@/core/extract/computed-css';
+import { formatJsReport } from '@/core/extract/js';
+import { toMarkdown } from '@/core/export/markdown';
+import { fileSlug, fullSnippet, standaloneDocument } from '@/core/export/snippet';
+import { CodeView } from './CodeView';
+import { copyText } from './clipboard';
+import { downloadText } from './download';
+import { neighbours } from './dom';
+import { collectJs } from './js';
+import { Modal, OptionGroup, Section, Switch, type Option } from './ui';
+
+type CodeKind = OutputType | 'js';
+
+interface Props {
+  host: Element;
+  container: HTMLElement;
+  picking: boolean;
+  selected: Element | null;
+  onPickStart: () => void;
+  onSelect: (el: Element) => void;
+  onPreview: (el: Element | null) => void;
+  onClose: () => void;
+}
+
+const WIDTH = 360;
+const PREVIEW_LINES = 9;
+const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
+
+const OUTPUT_OPTIONS: Option<OutputType | 'js'>[] = [
+  { value: 'full', label: 'Full' },
+  { value: 'html', label: 'HTML only' },
+  { value: 'css', label: 'CSS only' },
+  { value: 'js', label: 'JavaScript', soon: !FEATURES.jsTab },
+];
+const COPY_LABEL: Record<CodeKind, string> = {
+  full: 'Copy HTML + CSS',
+  html: 'Copy HTML',
+  css: 'Copy CSS',
+  js: 'Copy JavaScript',
+};
+const MODAL_TABS: { kind: CodeKind; label: string }[] = [
+  { kind: 'full', label: 'Full' },
+  { kind: 'html', label: 'HTML' },
+  { kind: 'css', label: 'CSS' },
+  { kind: 'js', label: 'JS' },
+];
+const language = (kind: CodeKind) => (kind === 'css' ? 'css' : kind === 'js' ? 'js' : 'html');
+
+function ComingSoonJs() {
+  return (
+    <div class="el-code el-soon">
+      <strong>JavaScript: coming soon</strong>
+      <p>
+        This will show event handlers, framework components (React, Vue, jQuery) and framework attributes for the
+        selected element.
+      </p>
+    </div>
+  );
+}
+
+export function Panel({ host, container, picking, selected, onPickStart, onSelect, onPreview, onClose }: Props) {
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [modal, setModal] = useState<CodeKind | null>(null);
+  const [js, setJs] = useState('');
+  const [pos, setPos] = useState(() => ({ x: Math.max(16, innerWidth - WIDTH - 16), y: 16 }));
+  const drag = useRef<{ dx: number; dy: number } | null>(null);
+  const crumbs = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    loadSettings().then(setSettings);
+  }, []);
+  const update = (patch: Partial<Settings>) => {
+    setSettings((s) => ({ ...s, ...patch }));
+    saveSettings(patch);
+  };
+
+  const defaults = useMemo(() => createDefaultStyleProvider(container), [container]);
+  useEffect(() => () => defaults.dispose(), [defaults]);
+
+  const { includeChildren, outputType } = settings;
+  const label = selected ? describeElement(selected) : '';
+
+  const out = useMemo(() => {
+    if (!selected) return null;
+    if (!selected.isConnected) return { html: '', css: '', full: '', note: 'This element was removed from the page.' };
+    const skip = (n: Node) => n === host;
+    const html = serializeHtml(selected, { baseUrl: document.baseURI, includeChildren, skip });
+    const css = computedCss(selected, defaults, { includeChildren, skip });
+    const note =
+      html.truncated || css.truncated
+        ? 'Output truncated: this element is very large.'
+        : 'CSS: computed styles that differ from browser defaults.';
+    return { html: html.html, css: css.css, full: fullSnippet(html.html, css.css), note };
+  }, [selected, includeChildren, refreshKey, host, defaults]);
+
+  useEffect(() => {
+    if (!FEATURES.jsTab || !selected) return setJs('');
+    let live = true;
+    collectJs(selected, includeChildren, (n) => n === host)
+      .then((report) => live && setJs(formatJsReport(report, label + (includeChildren ? ' and its children' : ''))))
+      .catch(() => live && setJs(''));
+    return () => {
+      live = false;
+    };
+  }, [selected, includeChildren, refreshKey, host, label]);
+
+  const codeFor = (kind: CodeKind) => (kind === 'js' ? js : (out?.[kind] ?? ''));
+  const current = codeFor(outputType);
+
+  // Esc closes the popup first. Window capture runs before the App's document listener.
+  useEffect(() => {
+    if (!modal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      setModal(null);
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [modal]);
+
+  const path = useMemo(() => (selected ? elementPath(selected) : []), [selected]);
+  const nav = selected ? neighbours(selected, host) : null;
+  useEffect(() => {
+    if (crumbs.current) crumbs.current.scrollLeft = crumbs.current.scrollWidth;
+  }, [path]);
+
+  const flash = (key: string) => {
+    setCopied(key);
+    setTimeout(() => setCopied(null), 1500);
+  };
+  const copy = async (text: string, key: string) => {
+    if (text && (await copyText(text, container))) flash(key);
+  };
+  const copyMarkdown = () =>
+    copy(
+      toMarkdown(label, [
+        { label: 'HTML', language: 'html', code: out?.html ?? '' },
+        { label: 'CSS', language: 'css', code: out?.css ?? '' },
+        { label: 'JavaScript', language: 'js', code: js },
+      ]),
+      'markdown',
+    );
+  const download = () => {
+    if (!out?.html) return;
+    downloadText(`elementlens-${fileSlug(label)}.html`, standaloneDocument(out.html, out.css, label), 'text/html', container);
+    flash('download');
+  };
+
+  const onDragStart = (e: PointerEvent) => {
+    if ((e.target as Element).closest('button')) return;
+    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+    drag.current = { dx: e.clientX - pos.x, dy: e.clientY - pos.y };
+  };
+  const onDragMove = (e: PointerEvent) => {
+    if (!drag.current) return;
+    setPos({
+      x: clamp(e.clientX - drag.current.dx, 0, innerWidth - 120),
+      y: clamp(e.clientY - drag.current.dy, 0, innerHeight - 40),
+    });
+  };
+
+  const NavButton = ({ to, label: text, title, area }: { to: Element | null | undefined; label: string; title: string; area: string }) => (
+    <button
+      class="el-btn el-btn-icon el-nav-btn"
+      style={{ gridArea: area }}
+      disabled={!to}
+      title={title}
+      aria-label={title}
+      onClick={() => to && onSelect(to)}
+    >
+      {text}
+    </button>
+  );
+
+  const jsSoon = (kind: CodeKind) => kind === 'js' && !FEATURES.jsTab;
+  const overflowing = current.split('\n').length > PREVIEW_LINES;
+
+  return (
+    <>
+      <section class="el-panel" style={{ left: `${pos.x}px`, top: `${pos.y}px`, width: `${WIDTH}px` }} role="dialog" aria-label={BRAND.name}>
+        <header class="el-header" onPointerDown={onDragStart} onPointerMove={onDragMove} onPointerUp={() => (drag.current = null)}>
+          <strong class="el-title">{BRAND.name}</strong>
+          <div class="el-header-actions">
+            <button class={`el-btn ${picking ? 'el-btn-active' : ''}`} onClick={onPickStart} title="Pick an element on the page">
+              {picking ? 'Picking…' : 'Pick'}
+            </button>
+            <button class="el-btn el-btn-icon" onClick={onClose} title="Close (Esc)" aria-label="Close">
+              ×
+            </button>
+          </div>
+        </header>
+
+        {!selected || !out ? (
+          <div class="el-empty">
+            <p>Hover over the page and click an element to inspect it.</p>
+            <p class="el-muted">Press Esc to exit.</p>
+          </div>
+        ) : (
+          <>
+            <div class="el-target">
+              <div class="el-crumbs" ref={crumbs}>
+                {path.map((el, i) => (
+                  <button
+                    key={i}
+                    class={`el-crumb ${el === selected ? 'el-crumb-current' : ''}`}
+                    onClick={() => onSelect(el)}
+                    onMouseEnter={() => onPreview(el)}
+                    onMouseLeave={() => onPreview(null)}
+                  >
+                    {describeElement(el, 1)}
+                  </button>
+                ))}
+              </div>
+              <div class="el-nav-cross">
+                <NavButton to={nav?.parent} label="↑" title="Parent element" area="up" />
+                <NavButton to={nav?.prev} label="←" title="Previous sibling" area="left" />
+                <NavButton to={nav?.child} label="↓" title="First child" area="down" />
+                <NavButton to={nav?.next} label="→" title="Next sibling" area="right" />
+              </div>
+            </div>
+
+            <div class="el-body">
+              <Section title="Copy settings" open={settings.settingsOpen} onToggle={() => update({ settingsOpen: !settings.settingsOpen })}>
+                <OptionGroup
+                  label="Component format"
+                  hint="Markup flavour of the copied code."
+                  value="html"
+                  onChange={() => {}}
+                  options={[
+                    { value: 'html', label: 'HTML' },
+                    { value: 'jsx', label: 'JSX', soon: true },
+                  ]}
+                />
+                <OptionGroup
+                  label="Style format"
+                  hint="How styles are written. Computed CSS lists the final values the browser uses."
+                  value="computed"
+                  onChange={() => {}}
+                  options={[
+                    { value: 'computed', label: 'CSS' },
+                    { value: 'tailwind', label: 'Tailwind', soon: true },
+                    { value: 'inline', label: 'Inline CSS', soon: true },
+                    { value: 'authored', label: 'Site rules', soon: true },
+                  ]}
+                />
+                <OptionGroup
+                  label="Output"
+                  hint="What the Copy button copies. Full is a <style> block plus the HTML, ready to paste."
+                  value={outputType}
+                  onChange={(v) => v !== 'js' && update({ outputType: v })}
+                  options={OUTPUT_OPTIONS}
+                />
+                <Switch
+                  label="Include children"
+                  hint="Also copy everything inside the selected element."
+                  checked={includeChildren}
+                  onChange={(v) => update({ includeChildren: v })}
+                />
+              </Section>
+
+              <div class="el-preview-head">
+                <span class="el-group-label">Preview</span>
+                <button class="el-btn el-btn-icon" title="Refresh output" aria-label="Refresh" onClick={() => setRefreshKey((k) => k + 1)}>
+                  ↻
+                </button>
+              </div>
+              <div class={`el-preview ${overflowing ? 'el-preview-clipped' : ''}`}>
+                {current ? <CodeView code={current} language={language(outputType)} /> : <div class="el-code" />}
+                {overflowing && <div class="el-preview-fade" aria-hidden="true" />}
+                <button class="el-btn el-preview-expand" onClick={() => setModal(outputType)}>
+                  Show full
+                </button>
+              </div>
+              <p class="el-note">{out.note}</p>
+
+              <Section title="Export actions" open={settings.exportOpen} onToggle={() => update({ exportOpen: !settings.exportOpen })}>
+                <div class="el-actions">
+                  <button class="el-btn el-action" onClick={copyMarkdown} title="HTML and CSS as Markdown code blocks">
+                    {copied === 'markdown' ? 'Copied!' : 'Copy as Markdown'}
+                  </button>
+                  <button class="el-btn el-action" onClick={download} title="A standalone page that renders this element">
+                    {copied === 'download' ? 'Downloaded!' : 'Download .html'}
+                  </button>
+                </div>
+              </Section>
+            </div>
+
+            <footer class="el-footer">
+              <button class="el-btn el-copy-main" onClick={() => copy(current, 'main')} disabled={!current}>
+                {copied === 'main' ? 'Copied!' : COPY_LABEL[outputType]}
+              </button>
+            </footer>
+          </>
+        )}
+      </section>
+
+      {modal && selected && (
+        <Modal title={label} onClose={() => setModal(null)}>
+          <div class="el-modal-toolbar">
+            <div class="el-tabs" role="tablist">
+              {MODAL_TABS.map((t) => (
+                <button
+                  key={t.kind}
+                  role="tab"
+                  aria-selected={modal === t.kind}
+                  class={`el-tab ${modal === t.kind ? 'el-tab-active' : ''}`}
+                  onClick={() => setModal(t.kind)}
+                >
+                  {t.label}
+                  {jsSoon(t.kind) && <span class="el-badge">Soon</span>}
+                </button>
+              ))}
+            </div>
+            <button
+              class="el-btn el-btn-primary"
+              disabled={jsSoon(modal) || !codeFor(modal)}
+              onClick={() => copy(codeFor(modal), 'modal')}
+            >
+              {copied === 'modal' ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+          {jsSoon(modal) ? <ComingSoonJs /> : <CodeView code={codeFor(modal)} language={language(modal)} />}
+        </Modal>
+      )}
+    </>
+  );
+}
