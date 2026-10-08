@@ -92,4 +92,4 @@ Only `activeTab`, `scripting` and `storage`. The extension gets access to a tab 
 
 ## License
 
-MIT, see [LICENSE](LICENSE). Bundled fonts (Archivo, Space Grotesk) are under the SIL Open Font License 1.1.
+MIT, see [LICENSE](LICENSE). Third-party fonts and data: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
