@@ -159,9 +159,21 @@ export function cleanStyles(target: StyleMap, defaults: StyleMap, options: Clean
 
   compact(decls, target);
 
-  return [...decls.entries()].sort(
-    ([a], [b]) => orderIndex(a) - orderIndex(b) || a.localeCompare(b),
-  );
+  return [...decls.entries()]
+    .map(([prop, value]): Declaration => [prop, tidyValue(prop, value)])
+    .sort(([a], [b]) => orderIndex(a) - orderIndex(b) || a.localeCompare(b));
+}
+
+// Layout sizes come out fractional (361.328px) from responsive layouts; whole pixels are
+// visually identical and far easier to read and reuse.
+const LAYOUT_SIZE = /^(width|height|min-width|min-height|max-width|max-height|flex-basis)$/;
+
+/** Round fractional px values: whole px for layout sizes, at most 2 decimals elsewhere. */
+export function tidyValue(prop: string, value: string): string {
+  return value.replace(/(-?\d*\.\d+)px/g, (_, n: string) => {
+    const num = Number(n);
+    return `${LAYOUT_SIZE.test(prop) ? Math.round(num) : Math.round(num * 100) / 100}px`;
+  });
 }
 
 export function formatRule(selector: string, decls: Declaration[]): string {

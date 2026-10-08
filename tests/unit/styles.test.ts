@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boxShorthand, cleanStyles, formatRule, type StyleMap } from '@/core/extract/styles';
+import { boxShorthand, cleanStyles, formatRule, tidyValue, type StyleMap } from '@/core/extract/styles';
 
 const SIDES = ['top', 'right', 'bottom', 'left'];
 
@@ -106,6 +106,22 @@ describe('cleanStyles', () => {
       ['border-radius', '6px'],
       ['overflow', 'hidden'],
     ]);
+  });
+});
+
+describe('tidyValue', () => {
+  it('rounds layout sizes to whole px and other px values to 2 decimals', () => {
+    expect(tidyValue('width', '361.328px')).toBe('361px');
+    expect(tidyValue('max-height', '0.6px')).toBe('1px');
+    expect(tidyValue('line-height', '26.4px')).toBe('26.4px');
+    expect(tidyValue('letter-spacing', '-0.3333px')).toBe('-0.33px');
+    expect(tidyValue('box-shadow', 'rgba(0, 0, 0, 0.5) 0px 1.234px 2.5px')).toBe('rgba(0, 0, 0, 0.5) 0px 1.23px 2.5px');
+    expect(tidyValue('opacity', '0.333')).toBe('0.333');
+  });
+
+  it('is applied by cleanStyles', () => {
+    const target = { ...defaults(), display: 'flex', width: '361.328px' };
+    expect(cleanStyles(target, { ...defaults(), width: 'auto' })).toEqual([['display', 'flex'], ['width', '361px']]);
   });
 });
 

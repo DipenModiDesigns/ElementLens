@@ -21,7 +21,7 @@ export default defineConfig({
   manifest: ({ browser }) => ({
     name: 'ElementLens',
     description:
-      'Pick any element on a page and get its HTML, CSS, Tailwind, JSX and more. Free, private, no data leaves your browser.',
+      'Pick any element and copy clean HTML, CSS, Tailwind or JSX. Free and private: no account, no tracking, nothing leaves your browser.',
     author: 'Dipen Modi (JupiterNexa)',
     homepage_url: 'https://dipenmodidesigns.github.io/ElementLens/',
     // Only the current tab, only after the user clicks. No host permissions.

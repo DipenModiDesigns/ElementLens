@@ -73,6 +73,10 @@ Static site in `website/` (no build step, no web fonts, no trackers): home, down
 - **Screenshot:** `npm run build && node scripts/capture-screenshot.mjs` refreshes `website/assets/screenshot.png` (1280x800, also usable for store listings).
 - **Icons:** edit `assets/icon.svg` / `assets/icon-small.svg`, then `node scripts/render-icons.mjs`.
 
+## Store listings
+
+Texts, permission justifications and per-store steps: [docs/store-listing.md](docs/store-listing.md). Images (screenshots, promo tiles, Edge logo) in `assets/store/`, regenerated with `npm run build && node scripts/render-store-assets.mjs`.
+
 ## Releases
 
 Push a version tag to build the Chrome and Firefox zips and attach them to a GitHub release (`.github/workflows/release.yml`). The website's download button points at the latest release.

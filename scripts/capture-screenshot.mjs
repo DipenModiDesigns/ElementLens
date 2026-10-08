@@ -60,11 +60,8 @@ await page.screenshot({ path: hero, clip: { x: 400, y: 0, width: 880, height: 80
 // Website lightbox (zoom): the full view at 2x.
 await page.screenshot({ path: path.join(site, 'assets/screenshot-full.png') });
 
-// Store listings: the full view at exactly 1280x800, as the stores require.
-const store = path.join(root, 'assets/store/screenshot-1280x800.png');
-fs.mkdirSync(path.dirname(store), { recursive: true });
-await page.screenshot({ path: store, scale: 'css' });
-console.log(`Saved ${path.relative(root, hero)} and ${path.relative(root, store)}`);
+// Store listing images are made by scripts/render-store-assets.mjs.
+console.log(`Saved ${path.relative(root, hero)} and the full-size zoom image`);
 
 server.close();
 await Promise.race([ctx.close(), new Promise((r) => setTimeout(r, 5000))]);
